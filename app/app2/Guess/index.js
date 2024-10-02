@@ -1,10 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useRouter } from 'expo-router'; // Updated import
 
 const { width } = Dimensions.get('window');
 
+
+
 const GameScreen = () => {
+  const router = useRouter(); // Initialize router
   const [answers] = useState([
     { word: "METAMORPH", letters: "OAMHMTIEP", question: "What is the change of form or structure?" }, // 7 letters
     { word: "BREAKDOWN", letters: "RBEODKNA", question: "What is the process of separating into parts?" }, // 8 letters
@@ -139,7 +143,7 @@ const GameScreen = () => {
   }, [selectedQuestionIndex, usedQuestions]);
 
   const handleDone = () => {
-    // Optional: Logic to handle when the user indicates they've finished
+    router.push('app2/Identification');
   };
 
   return (

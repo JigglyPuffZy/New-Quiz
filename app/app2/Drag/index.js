@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal } from 'react-native';
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -41,16 +41,22 @@ const DraggableLetter = ({ letter, onGestureEvent, onGestureEnd }) => {
 const LetterDragDropPuzzle = () => {
   const [answers, setAnswers] = useState({});
   const [letters, setLetters] = useState({});
+  const [modalVisible, setModalVisible] = useState(false); // State for modal visibility
+  const [score, setScore] = useState(0); // State for score
   const router = useRouter(); // Initialize router
 
   const questions = [
-    { text: 'Form a word related to "JavaScript"', answer: 'REACT' },
-    { text: 'Form a word related to "Mobile"', answer: 'ANDROID' },
-    { text: 'Form a word related to "Web"', answer: 'HTML' },
-    { text: 'Form a word related to "Database"', answer: 'SQL' },
-    { text: 'Form a word related to "Design"', answer: 'UX' },
-    { text: 'Form a word related to "Programming"', answer: 'PYTHON' },
-  ];
+    { text: 'Form a word related to "Narration"', answer: 'RECOUNT' }, // To tell or describe an event
+    { text: 'Form a word related to "Fiction"', answer: 'NOVEL' }, // A long narrative work of fiction
+    { text: 'Form a word related to "Editing"', answer: 'REVIEW' }, // To assess or evaluate written content
+    { text: 'Form a word related to "Research"', answer: 'ANALYZE' }, // To examine in detail for purposes of explanation
+    { text: 'Form a word related to "Syntax"', answer: 'FORMAT' }, // The arrangement of elements in a document
+    { text: 'Form a word related to "Audience"', answer: 'READER' }, // A person who reads written content
+    { text: 'Form a word related to "Context"', answer: 'SETTING' }, // The environment or surrounding in which a narrative takes place
+    { text: 'Form a word related to "Critique"', answer: 'REVIEW' }, // A critical assessment of a text or performance
+    { text: 'Form a word related to "Thesis"', answer: 'SEARCH' }, // A statement or theory put forward to be maintained or proved
+    { text: 'Form a word related to "Genre"', answer: 'STYLE' }, // A category of artistic composition
+];
 
   useEffect(() => {
     resetPuzzle();
@@ -124,6 +130,16 @@ const LetterDragDropPuzzle = () => {
     }));
   };
 
+  const handleDone = () => {
+    const calculatedScore = Object.keys(answers).reduce((acc, questionText) => {
+      const correctAnswer = questions.find(q => q.text === questionText).answer;
+      const userAnswer = answers[questionText].join('');
+      return acc + (userAnswer === correctAnswer ? 1 : 0);
+    }, 0);
+    setScore(calculatedScore);
+    setModalVisible(true); // Show the modal
+  };
+
   const renderQuestion = (question, index) => (
     <View key={index} style={styles.questionContainer}>
       <Text style={styles.questionNumber}>{`Question ${index + 1}`}</Text>
@@ -178,10 +194,34 @@ const LetterDragDropPuzzle = () => {
 
           {questions.map((question, index) => renderQuestion(question, index))}
 
-          <TouchableOpacity style={styles.doneButton} onPress={() => router.push('app2/6thPage')}>
+          <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
             <Text style={styles.doneText}>Done</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {/* Modal for Congrats message */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalHeader}>You have Finish Level 2</Text>
+              <Text style={styles.modalText}>Your score: {score}/{questions.length}</Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  setModalVisible(false);
+                  router.push('app2/HomePage');
+                }}
+              >
+                <Text style={styles.modalButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -315,6 +355,39 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: 300,
+    padding: 20,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign:"center"
+  },
+  modalButton: {
+    backgroundColor: '#069906',
+    padding: 10,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+
   },
 });
 

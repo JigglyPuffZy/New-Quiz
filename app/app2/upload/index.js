@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import {
+    View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal, SafeAreaView,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
@@ -9,6 +11,9 @@ const SimpleUploadOrCapture = () => {
     const [fileUri, setFileUri] = useState(null);
     const [fileName, setFileName] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState('');
+    const [success, setSuccess] = useState(false); // New state for success
     const router = useRouter();
 
     const requestCameraPermissions = async () => {
@@ -68,13 +73,28 @@ const SimpleUploadOrCapture = () => {
             Alert.alert('No File Selected', 'Please upload or capture a file before submitting.');
             return;
         }
-        if (fileName) {
-            console.log('Submitted Document:', fileName);
-        }
-        if (fileUri) {
-            console.log('Submitted Image URI:', fileUri);
-        }
-        router.push('app2/3rdPage');
+
+        // Show the modal and start the "scanning" process
+        setModalVisible(true);
+        setSuccess(false);
+        setLoadingMessage('Wait, scanning...');
+
+        setTimeout(() => {
+            // Update message after a delay
+            setLoadingMessage('Separating to levels...');
+        }, 2000);
+
+        setTimeout(() => {
+            // Display success message after scanning is done
+            setLoadingMessage('Scanning successful!');
+            setSuccess(true);
+        }, 4000);
+
+        setTimeout(() => {
+            // Hide modal and navigate after a brief delay
+            setModalVisible(false);
+            router.push('app2/HomePage');
+        }, 6000); // Adjust the duration as needed
     };
 
     const handleReset = () => {
@@ -130,11 +150,33 @@ const SimpleUploadOrCapture = () => {
                 <FontAwesome name="arrow-left" size={20} color="#fff" />
                 <Text style={styles.buttonText}> Back</Text>
             </TouchableOpacity>
+
+            {/* Modal for loading screen */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                    setModalVisible(false);
+                }}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalText}>{loadingMessage}</Text>
+                        {!success ? (
+                            <ActivityIndicator size="large" color="#BCC18D" style={styles.loading} />
+                        ) : (
+                            <FontAwesome name="check-circle" size={50} color="green" />
+                        )}
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    // Same styles as before, no changes necessary.
     container: {
         flex: 1,
         justifyContent: 'flex-start',
@@ -156,7 +198,7 @@ const styles = StyleSheet.create({
     button: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',  // Center the text
+        justifyContent: 'center',
         backgroundColor: '#BCC18D',
         paddingVertical: 14,
         paddingHorizontal: 24,
@@ -221,35 +263,58 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#BCC18D',
-        marginTop: 8,
     },
     imageContainer: {
+        width: '100%',
+        height: 200,
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 10,
     },
     image: {
-        width: 250,
-        height: 250,
-        resizeMode: 'cover',
+        width: '100%',
+        height: '100%',
+        resizeMode: 'contain',
         borderRadius: 12,
-        borderWidth: 2,
-        borderColor: '#ddd',
     },
     infoText: {
-        fontSize: 18,
-        color: '#666',
-        textAlign: 'center',
+        fontSize: 16,
+        color: '#999',
     },
     backButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#ff4d4d', // Adjust color as needed
+        justifyContent: 'center',
+        backgroundColor: '#BCC18D',
         paddingVertical: 14,
         paddingHorizontal: 24,
         borderRadius: 12,
-        marginVertical: 20,
-        elevation: 4,
-        top: 90,
+        marginTop: 30,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        width: 300,
+        padding: 20,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.5,
+        shadowRadius: 8,
+    },
+    modalText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        color: '#333',
+        textAlign: 'center',
     },
 });
 

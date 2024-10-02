@@ -23,16 +23,9 @@ const Widget = () => {
     router.push('app2/upload');
   };
 
-  const handleBack = () => {
-    navigation.goBack();
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.innerContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <FontAwesome name="arrow-left" size={24} color="#000000" />
-        </TouchableOpacity>
         <Image
           source={require('./../../../assets/images/2page.png')}
           style={styles.image}
@@ -65,12 +58,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 40,
-  },
-  backButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 40 : 20,
-    left: 20,
-    zIndex: 1,
   },
   image: {
     width: '100%',
