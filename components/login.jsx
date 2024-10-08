@@ -39,7 +39,7 @@ const TriviaGameScreen = () => {
           {/* Left section with Samurai */}
           <View style={styles.leftPanel}>
             <LinearGradient
-              colors={['#BCC18D', '#E7E89F']}
+              colors={['#1C7AE0', '#3D6DA1']}
               start={[0, 0]}
               end={[1, 1]}
               style={styles.leftGradient}
@@ -70,23 +70,8 @@ const TriviaGameScreen = () => {
           </View>
         </View>
 
-        {/* Fun Games Section */}
-        <TouchableOpacity 
-          style={styles.funGamesButton} 
-          activeOpacity={0.7}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-        >
-          <Animated.View style={[styles.buttonInner, { transform: [{ scale: animatedValue }] }]}>
-            <Image 
-              source={{ uri: 'https://cdn-icons-png.flaticon.com/512/5692/5692030.png' }}
-              style={styles.funGamesIcon}
-            />
-            <Text style={styles.funGamesText}>Fun games!</Text>
-          </Animated.View>
-        </TouchableOpacity>
-
-        {/* Trivia Game Quiz Section */}
+        
+        {/*  Game Quiz Section */}
         <View style={styles.quizSection}>
           <Text style={styles.quizTitle}>Quiz Whirl Game Quiz</Text>
           <Text style={styles.quizDescription}>
@@ -99,7 +84,7 @@ const TriviaGameScreen = () => {
           onPress={() => router.push('app2/Nickname')}
           style={styles.getStartedButton} activeOpacity={0.7}>
           <LinearGradient
-            colors={['#BCC18D', '#E7E89F']}
+            colors={['#1C7AE0', '#3D6DA1']}
             start={[0, 0]}
             end={[1, 1]}
             style={styles.gradientButton}
@@ -172,7 +157,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     alignItems: 'center',
-    shadowColor: '#E7E89F',
+    shadowColor: '#1C7AE0',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -190,31 +175,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
-  funGamesButton: {
-    alignSelf: 'center',
-    marginTop: 30,
-    right:96,
-    bottom:120,
-  },
+ 
   buttonInner: {
     flexDirection: 'row',
-    backgroundColor: '#BCC18D',
+    backgroundColor: '#3D6DA1',
     borderRadius: 50,
     paddingVertical: 12,
     paddingHorizontal: 30,
     alignItems: 'center',
-    shadowColor: '#E7E89F',
+    shadowColor: '#1C7AE0',
     shadowOffset: { width: 1, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 15,
     elevation: 10,
   },
-  funGamesIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 15,
-    
-  },
+
   funGamesText: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -228,12 +203,14 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 'bold',
     color: '#333333',
+    bottom:50,
   },
   quizDescription: {
     fontSize: 16,
     color: '#666666',
     textAlign: 'center',
     marginTop: 10,
+    bottom:50,
   },
   getStartedButton: {
     marginBottom: 40,
@@ -245,6 +222,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 15,
     elevation: 10,
+    bottom:70,
+
   },
   gradientButton: {
     paddingVertical: 18,

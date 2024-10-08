@@ -1,37 +1,36 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView, Modal, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useRouter } from 'expo-router'; // Updated import
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-
-
 const GameScreen = () => {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
   const [answers] = useState([
-    { word: "METAMORPH", letters: "OAMHMTIEP", question: "What is the change of form or structure?" }, // 7 letters
-    { word: "BREAKDOWN", letters: "RBEODKNA", question: "What is the process of separating into parts?" }, // 8 letters
-    { word: "DISSOLVE", letters: "VDLSSIE", question: "What happens when a solid mixes into a liquid?" }, // 7 letters
+    { word: "METAMORPH", letters: "OAMHMTIEP", question: "What is the change of form or structure?" },
+    { word: "BREAKDOWN", letters: "RBEODKNA", question: "What is the process of separating into parts?" },
+    { word: "DISSOLVE", letters: "VDLSSIE", question: "What happens when a solid mixes into a liquid?" },
   ]);
 
   const [shuffledLetters, setShuffledLetters] = useState([
-    ["M", "H", "O", "T", "M", "E", "T", "A", "R", "P", "O", "H",],
-    ["N", "B", "R", "E", "K", "W", "D", "O",],
-    ["D", "S", "S", "I", "L", "V", "E","O"],
+    ["M", "H", "O", "T", "M", "E", "T", "A", "R", "P", "O", "H"],
+    ["N", "B", "R", "E", "K", "W", "D", "O"],
+    ["D", "S", "S", "I", "L", "V", "E", "O"],
   ]);
 
   const [selectedAnswers, setSelectedAnswers] = useState(Array(answers.length).fill(null));
   const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(null);
   const [usedQuestions, setUsedQuestions] = useState(new Set());
   const [selectedLetterIndices, setSelectedLetterIndices] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [showAnswersModal, setShowAnswersModal] = useState(false);
+  const [score, setScore] = useState(0);
 
   const handleDrop = (dropZoneIndex) => {
     if (selectedQuestionIndex !== null) {
       const newSelectedAnswers = [...selectedAnswers];
       newSelectedAnswers[dropZoneIndex] = answers[selectedQuestionIndex];
-
-      // Remove alert logic to not show modals when dropping answers
       setSelectedAnswers(newSelectedAnswers);
       setUsedQuestions((prev) => new Set(prev).add(selectedQuestionIndex));
       setSelectedQuestionIndex(null);
@@ -142,8 +141,56 @@ const GameScreen = () => {
     );
   }, [selectedQuestionIndex, usedQuestions]);
 
+  const calculateScore = () => {
+    let correctAnswersCount = 0;
+    selectedAnswers.forEach((answer, index) => {
+      if (answer && answer.word === answers[index].word) {
+        correctAnswersCount++;
+      }
+    });
+    const calculatedScore = (correctAnswersCount / answers.length) * 100;
+    return calculatedScore;
+  };
+
   const handleDone = () => {
-    router.push('app2/Identification');
+    const calculatedScore = calculateScore();
+    setScore(calculatedScore);
+    setShowModal(true);
+  };
+
+  const handleQuit = () => {
+    router.push('app2/HomePage');
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    router.push('app2/HomePage');
+  };
+
+  const handleSeeAnswers = () => {
+    setShowModal(false);
+    setShowAnswersModal(true);
+  };
+
+  const closeAnswersModal = () => {
+    setShowAnswersModal(false);
+    router.push('app2/HomePage');
+  };
+
+  const renderAnswers = () => {
+    return answers.map((answer, index) => {
+      const userAnswer = selectedAnswers[index];
+      const isCorrect = userAnswer && userAnswer.word === answer.word;
+      return (
+        <View key={index} style={styles.answerItem}>
+          <Text style={styles.answerItemText}>Question: {answer.question}</Text>
+          <Text style={styles.answerItemText}>Correct Answer: {answer.word}</Text>
+          <Text style={[styles.answerItemText, isCorrect ? styles.correctAnswer : styles.wrongAnswer]}>
+            Your Answer: {userAnswer ? userAnswer.word : 'Not answered'}
+          </Text>
+        </View>
+      );
+    });
   };
 
   return (
@@ -168,148 +215,187 @@ const GameScreen = () => {
         }
       />
 
-      {/* Done Button */}
+      <TouchableOpacity style={styles.quitButton} onPress={handleQuit}>
+        <Text style={styles.quitButtonText}>Quit</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
         <Text style={styles.doneButtonText}>Done</Text>
       </TouchableOpacity>
+
+      <Modal visible={showModal} animationType="slide" transparent={true}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>Your Score: {score.toFixed(2)}%</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={handleSeeAnswers}>
+              <Text style={styles.modalButtonText}>See Answers</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal}>
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showAnswersModal} animationType="slide" transparent={true}>
+        <View style={styles.modalBackground}>
+          <View style={styles.answersModalContainer}>
+            <ScrollView style={styles.answersScrollView}>
+              {renderAnswers()}
+            </ScrollView>
+            <TouchableOpacity style={styles.modalCloseButton} onPress={closeAnswersModal}>
+              <Text style={styles.modalCloseButtonText}>Back to Home</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#E7E89F', // Updated background color
+    backgroundColor: '#1C7AE0',
   },
-  
   levelText: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#ffffff', // White color for main text
-    marginBottom: 10,
+    fontSize: 48,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 15,
     textAlign: 'center',
-    fontFamily: 'Inter-Bold',
-    textShadowColor: '#000000', // Black color for the outline
-    textShadowOffset: { width: 1, height: 1 }, // Offset for the outline
-    textShadowRadius: 2, // Radius for the blur of the outline
+    fontFamily: 'Inter-ExtraBold',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
   },
   instructionText: {
     fontSize: 18,
-    color: '#000000',
+    color: '#fff',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 25,
     fontStyle: 'italic',
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Inter-Medium',
+    letterSpacing: 0.5,
   },
   questionsContainer: {
-    marginBottom: 20,
-    width: width * 0.9,
-    left:18,
+    marginBottom: 25,
+    width: width * 0.95,
+    alignSelf: 'center',
   },
   answerContainer: {
-    backgroundColor: 'transparent',
-    borderRadius: 15,
-    elevation: 4,
-    marginBottom: 15,
-    padding: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    elevation: 8,
+    marginBottom: 20,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   questionBox: {
-    backgroundColor: '#BCC18D',
-    padding: 10,
-    borderRadius: 10,
+    backgroundColor: 'rgba(61, 109, 161, 0.8)',
+    padding: 15,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     height: 'auto',
-    borderColor: '#000000',
+    borderColor: '#fff',
     borderWidth: 2,
-    marginBottom: 10,
+    marginBottom: 15,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-      
-    },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
   },
   selectedQuestionBox: {
-    backgroundColor: '#BCC18D',
+    backgroundColor: 'rgba(61, 109, 161, 1)',
+    transform: [{ scale: 1.05 }],
   },
   answerBox: {
-    backgroundColor: '#BCC18D', // Updated answer box color
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#BCC18D',
+    backgroundColor: 'rgba(61, 109, 161, 0.9)',
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
-    elevation: 2,
-    padding: 5,
-    minHeight: 50,
+    marginBottom: 15,
+    elevation: 5,
+    padding: 10,
+    minHeight: 60,
   },
   mergedQuestionBox: {
-    backgroundColor: '#BCC18D',
+    backgroundColor: 'rgba(61, 109, 161, 1)',
   },
   answerText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
     fontFamily: 'Inter-Bold',
     textAlign: 'center',
-    textShadowColor: '#000000', // Black color for the outline
-    textShadowOffset: { width: 1, height: 1 }, // Offset for the outline
-    textShadowRadius: 2, // Radius for the blur of the outline
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   lettersContainer: {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
+    marginTop: 15,
   },
   letterRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    maxWidth: width * 0.9,
+    maxWidth: width * 0.95,
   },
   letterButton: {
-    backgroundColor: '#BCC18D', // Updated letter button color
-    padding: 10,
-    margin: 5,
-    borderRadius: 5,
-    elevation: 2,
-    width: 40,
-    height: 40,
+    backgroundColor: 'rgba(61, 109, 161, 0.9)',
+    padding: 12,
+    margin: 6,
+    borderRadius: 10,
+    elevation: 5,
+    width: 45,
+    height: 45,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ffffff',
   },
   letterText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
-    textShadowColor: '#000000', // Black color for the outline
-    textShadowOffset: { width: 1, height: 1 }, // Offset for the outline
-    textShadowRadius: 2, // Radius for the blur of the outline
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   shuffleButton: {
-    backgroundColor: '#BCC18D',
-    borderRadius: 5,
-    padding: 10,
-    marginTop: 10,
+    backgroundColor: 'rgba(61, 109, 161, 0.9)',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 15,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ffffff',
   },
   questionText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#FFFFFF',
     fontWeight: 'bold',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   resetButton: {
     backgroundColor: '#E53E3E',
-    borderRadius: 5,
-    padding: 10,
+    borderRadius: 10,
+    padding: 12,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 25,
+    elevation: 5,
   },
   resetButtonText: {
     color: '#FFFFFF',
@@ -319,20 +405,105 @@ const styles = StyleSheet.create({
   questionIcon: {
     marginTop: 10,
   },
-  doneButton: {
-    backgroundColor: '#BCC18D', // Green color for the done button
-    borderRadius: 5,
+  quitButton: {
+    backgroundColor: '#FF0000',
+    borderRadius: 10,
     padding: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20, // Add some margin at the bottom
-    marginHorizontal: 20, // Add some horizontal margin
+    marginBottom: 20,
+    marginHorizontal: 20,
+    elevation: 5,
+  },
+  quitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  doneButton: {
+    backgroundColor: '#3D6DA1',
+    borderRadius: 10,
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    marginHorizontal: 20,
+    elevation: 5,
   },
   doneButtonText: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalContainer: {
+    width: '85%',
+    backgroundColor: '#fff',
+    padding: 25,
+    borderRadius: 20,
+    alignItems: 'center',
+    elevation: 10,
+  },
+  answersModalContainer: {
+    width: '90%',
+    height: '80%',
+    backgroundColor: '#fff',
+    padding: 25,
+    borderRadius: 20,
+    alignItems: 'center',
+    elevation: 10,
+  },
+  answersScrollView: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  answerItem: {
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+  },
+  answerItemText: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  correctAnswer: {
+    color: 'green',
+  },
+  wrongAnswer: {
+    color: 'red',
+  },
+  modalButton: {
+    backgroundColor: '#3D6DA1',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 10,
+    elevation: 5,
+    marginBottom: 10,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalCloseButton: {
+    backgroundColor: '#FF6347',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  modalCloseButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
 export default GameScreen;
+
