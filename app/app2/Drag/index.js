@@ -26,9 +26,9 @@ const DraggableLetter = ({ letter, onGestureEvent, onGestureEnd }) => {
         onGestureEvent(event.nativeEvent, letter.id);
       }}
       onEnded={(event) => {
+        onGestureEnd(event.nativeEvent, letter.id);
         animatedX.value = withSpring(0);
         animatedY.value = withSpring(0);
-        onGestureEnd(event.nativeEvent, letter.id);
       }}
     >
       <Animated.View style={[styles.letter, animatedStyle]}>
@@ -103,16 +103,21 @@ const LetterDragDropPuzzle = () => {
     const targetBoxIndex = answers[questionText].findIndex((box) => box === null);
     const droppedLetter = letters[questionText].find((letter) => letter.id === id);
 
-    if (targetBoxIndex !== -1 && droppedLetter && Math.abs(event.translationY) < 50) {
-      setLetters((prevLetters) => ({
-        ...prevLetters,
-        [questionText]: prevLetters[questionText].filter((letter) => letter.id !== id),
-      }));
-      setAnswers((prevAnswers) => {
-        const newAnswer = [...prevAnswers[questionText]];
-        newAnswer[targetBoxIndex] = droppedLetter.char;
-        return { ...prevAnswers, [questionText]: newAnswer };
-      });
+    if (targetBoxIndex !== -1 && droppedLetter) {
+      const boxPosition = targetBoxIndex * 50; // Assuming each box is 50 units wide
+      const dropPosition = event.absoluteX;
+
+      if (Math.abs(dropPosition - boxPosition) < 50) { // If dropped within 50 units of the box center
+        setLetters((prevLetters) => ({
+          ...prevLetters,
+          [questionText]: prevLetters[questionText].filter((letter) => letter.id !== id),
+        }));
+        setAnswers((prevAnswers) => {
+          const newAnswer = [...prevAnswers[questionText]];
+          newAnswer[targetBoxIndex] = droppedLetter.char;
+          return { ...prevAnswers, [questionText]: newAnswer };
+        });
+      }
     }
   };
 
@@ -269,176 +274,176 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-  shadowColor: '#000',
-  shadowOpacity: 0.1,
-  shadowRadius: 10,
-  elevation: 5,
-  overflow: 'hidden',
-},
-questionGradient: {
-  padding: 15,
-  borderTopLeftRadius: 12,
-  borderTopRightRadius: 12,
-},
-questionNumber: {
-  fontSize: 18,
-  fontFamily: 'Poppins_600SemiBold',
-  color: '#FFFFFF',
-  marginBottom: 5,
-},
-questionText: {
-  fontSize: 16,
-  fontFamily: 'Poppins_400Regular',
-  color: '#FFFFFF',
-},
-letterBank: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  justifyContent: 'center',
-  padding: 15,
-  backgroundColor: '#F8F9FA',
-},
-letter: {
-  width: 40,
-  height: 40,
-  justifyContent: 'center',
-  alignItems: 'center',
-  margin: 5,
-  backgroundColor: '#4CAF50',
-  borderRadius: 8,
-  elevation: 3,
-},
-letterText: {
-  fontSize: 24,
-  fontFamily: 'Poppins_600SemiBold',
-  color: '#FFFFFF',
-},
-answerBoxes: {
-  flexDirection: 'row',
-  justifyContent: 'center',
-  marginBottom: 15,
-  paddingHorizontal: 15,
-},
-answerBox: {
-  width: 40,
-  height: 40,
-  borderWidth: 2,
-  borderColor: '#3498DB',
-  justifyContent: 'center',
-  alignItems: 'center',
-  margin: 5,
-  backgroundColor: '#ECF0F1',
-  borderRadius: 8,
-},
-boxText: {
-  fontSize: 24,
-  fontFamily: 'Poppins_600SemiBold',
-  color: '#2C3E50',
-},
-controls: {
-  flexDirection: 'row',
-  justifyContent: 'space-around',
-  paddingBottom: 15,
-},
-icon: {
-  padding: 10,
-  backgroundColor: '#ECF0F1',
-  borderRadius: 25,
-},
-buttonContainer: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginTop: 20,
-},
-quitButton: {
-  backgroundColor: '#E74C3C',
-  padding: 15,
-  borderRadius: 8,
-  flex: 1,
-  marginRight: 10,
-  elevation: 3,
-},
-quitButtonText: {
-  color: '#FFFFFF',
-  textAlign: 'center',
-  fontFamily: 'Poppins_600SemiBold',
-  fontSize: 16,
-},
-doneButton: {
-  backgroundColor: '#2ECC71',
-  padding: 15,
-  borderRadius: 8,
-  flex: 1,
-  marginLeft: 10,
-  elevation: 3,
-},
-doneButtonText: {
-  color: '#FFFFFF',
-  textAlign: 'center',
-  fontFamily: 'Poppins_600SemiBold',
-  fontSize: 16,
-},
-modalOverlay: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-},
-modalView: {
-  margin: 20,
-  backgroundColor: 'white',
-  borderRadius: 20,
-  padding: 35,
-  alignItems: 'center',
-  shadowColor: '#000',
-  shadowOffset: {
-    width: 0,
-    height: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    overflow: 'hidden',
   },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-  elevation: 5,
-  width: '80%',
-},
-modalText: {
-  marginBottom: 15,
-  textAlign: 'center',
-  fontSize: 20,
-  fontFamily: 'Poppins_600SemiBold',
-  color: '#2C3E50',
-},
-modalButtons: {
-  flexDirection: 'row',
-  justifyContent: 'space-around',
-  width: '100%',
-},
-seeAnswersButton: {
-  backgroundColor: '#3498DB',
-  padding: 12,
-  borderRadius: 8,
-  flex: 1,
-  marginRight: 5,
-},
-seeAnswersText: {
-  color: '#FFFFFF',
-  textAlign: 'center',
-  fontFamily: 'Poppins_600SemiBold',
-  fontSize: 14,
-},
-goBackButton: {
-  backgroundColor: '#E74C3C',
-  padding: 12,
-  borderRadius: 8,
-  flex: 1,
-  marginLeft: 5,
-},
-goBackText: {
-  color: '#FFFFFF',
-  textAlign: 'center',
-  fontFamily: 'Poppins_600SemiBold',
-  fontSize: 14,
-},
-}
-);
+  questionGradient: {
+    padding: 15,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  questionNumber: {
+    fontSize: 18,
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 5,
+  },
+  questionText: {
+    fontSize: 16,
+    fontFamily: 'Poppins_400Regular',
+    color: '#FFFFFF',
+  },
+  letterBank: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    padding: 15,
+    backgroundColor: '#F8F9FA',
+  },
+  letter: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 5,
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    elevation: 3,
+  },
+  letterText: {
+    fontSize: 24,
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#FFFFFF',
+  },
+  answerBoxes: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 15,
+    paddingHorizontal: 15,
+    width: '100%',
+  },
+  answerBox: {
+    width: 40,
+    height: 40,
+    borderWidth: 2,
+    borderColor: '#3498DB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 5,
+    backgroundColor: '#ECF0F1',
+    borderRadius: 8,
+  },
+  boxText: {
+    fontSize: 24,
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#2C3E50',
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingBottom: 15,
+  },
+  icon: {
+    padding: 10,
+    backgroundColor: '#ECF0F1',
+    borderRadius: 25,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  quitButton: {
+    backgroundColor: '#E74C3C',
+    padding: 15,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 10,
+    elevation: 3,
+  },
+  quitButtonText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 16,
+  },
+  doneButton: {
+    backgroundColor: '#2ECC71',
+    padding: 15,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 10,
+    elevation: 3,
+  },
+  doneButtonText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '80%',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 20,
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#2C3E50',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  seeAnswersButton: {
+    backgroundColor: '#3498DB',
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 5,
+  },
+  seeAnswersText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 14,
+  },
+  goBackButton: {
+    backgroundColor: '#E74C3C',
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 5,
+  },
+  goBackText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 14,
+  },
+});
 
 export default LetterDragDropPuzzle;

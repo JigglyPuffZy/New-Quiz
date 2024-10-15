@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
 import {
-    View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal, SafeAreaView,
+    View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal, SafeAreaView, Animated
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const SimpleUploadOrCapture = () => {
-    const [fileUri, setFileUri] = useState(null);
     const [fileName, setFileName] = useState(null);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('');
-    const [success, setSuccess] = useState(false); 
+    const [success, setSuccess] = useState(false);
     const router = useRouter();
+    const [bounceAnim] = useState(new Animated.Value(0));
 
-    const requestCameraPermissions = async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        return status === 'granted';
+    const startBounceAnimation = () => {
+        Animated.sequence([
+            Animated.timing(bounceAnim, { toValue: -10, duration: 300, useNativeDriver: true }),
+            Animated.spring(bounceAnim, { toValue: 0, friction: 4, useNativeDriver: true })
+        ]).start();
     };
 
     const handleUploadDocument = async () => {
@@ -30,7 +32,7 @@ const SimpleUploadOrCapture = () => {
             if (!result.canceled && result.assets && result.assets.length > 0) {
                 const documentAsset = result.assets[0];
                 setFileName(documentAsset.name);
-                setFileUri(null);
+                startBounceAnimation();
             } else {
                 setFileName(null);
             }
@@ -43,47 +45,22 @@ const SimpleUploadOrCapture = () => {
         }
     };
 
-    const handleCaptureImage = async () => {
-        setLoading(true);
-        const hasPermission = await requestCameraPermissions();
-        if (!hasPermission) {
-            Alert.alert('Permission Denied', 'Camera access is required to capture images.');
-            setLoading(false);
-            return;
-        }
-        try {
-            const result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                quality: 1,
-            });
-            if (!result.canceled && result.assets && result.assets.length > 0) {
-                setFileUri(result.assets[0].uri);
-                setFileName(null);
-            }
-        } catch (error) {
-            console.error('Error capturing image:', error);
-            Alert.alert('Error', 'Failed to capture image. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleSubmit = () => {
-        if (!fileName && !fileUri) {
-            Alert.alert('No File Selected', 'Please upload or capture a file before submitting.');
+        if (!fileName) {
+            Alert.alert('No File Selected', 'Please upload a file before submitting.');
             return;
         }
 
         setModalVisible(true);
         setSuccess(false);
-        setLoadingMessage('Wait, scanning...');
+        setLoadingMessage('Processing...');
 
         setTimeout(() => {
-            setLoadingMessage('Separating to levels...');
+            setLoadingMessage('Analyzing content...');
         }, 2000);
 
         setTimeout(() => {
-            setLoadingMessage('Scanning successful!');
+            setLoadingMessage('Upload successful!');
             setSuccess(true);
         }, 4000);
 
@@ -94,230 +71,166 @@ const SimpleUploadOrCapture = () => {
     };
 
     const handleReset = () => {
-        setFileUri(null);
         setFileName(null);
     };
 
-    const handleBack = () => {
-        router.back(); 
-    };
-
     return (
-        <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Upload / Capture</Text>
-            {loading && <ActivityIndicator size="large" color="#74b72e" style={styles.loading} />}
+        <LinearGradient colors={['#d8ffb1', '#a8d38d']} style={styles.container}>
+            <SafeAreaView style={styles.safeArea}>
+                <Text style={styles.title}>Upload Document</Text>
 
-            <View style={styles.previewContainer}>
-                {fileName && (
-                    <View style={styles.fileContainer}>
-                        <Text style={styles.fileText}>Uploaded Document:</Text>
-                        <Text style={styles.fileName}>{fileName}</Text>
-                    </View>
-                )}
-                {fileUri && (
-                    <View style={styles.imageContainer}>
-                        <Image source={{ uri: fileUri }} style={styles.image} />
-                    </View>
-                )}
-                {!fileName && !fileUri && !loading && (
-                    <Text style={styles.infoText}>No file selected or captured</Text>
-                )}
-            </View>
-            
-            {/* Buttons for Upload and Capture */}
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={handleUploadDocument}>
-                    <Text style={styles.buttonText}>📁 Upload</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={handleCaptureImage}>
-                    <Text style={styles.buttonText}>📸 Capture</Text>
-                </TouchableOpacity>
-            </View>
+                <Animated.View style={[styles.uploadArea, { transform: [{ translateY: bounceAnim }] }]}>
+                    <FontAwesome5 name={fileName ? "file-alt" : "cloud-upload-alt"} size={80} color="#74b72e" />
+                    <Text style={styles.uploadText}>{fileName || "No file selected"}</Text>
+                    <TouchableOpacity style={styles.uploadButton} onPress={handleUploadDocument}>
+                        <Text style={styles.buttonText}>Select File</Text>
+                    </TouchableOpacity>
+                </Animated.View>
 
-            {/* Buttons for Submit and Reset */}
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                    <Text style={styles.buttonText}>✓ Submit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-                    <Text style={styles.buttonText}>↻ Reset</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Back Button at the bottom */}
-            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                <Text style={styles.buttonText}>← Back</Text>
-            </TouchableOpacity>
-
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => {
-                    setModalVisible(false);
-                }}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalText}>{loadingMessage}</Text>
-                        {!success ? (
-                            <ActivityIndicator size="large" color="#74b72e" style={styles.loading} />
-                        ) : (
-                            <FontAwesome name="check-circle" size={50} color="green" />
-                        )}
-                    </View>
+                <View style={styles.actionContainer}>
+                    <TouchableOpacity 
+                        style={[styles.actionButton, styles.submitButton]} 
+                        onPress={handleSubmit}
+                        disabled={!fileName}
+                    >
+                        <Text style={styles.buttonText}>Submit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.actionButton, styles.resetButton]} onPress={handleReset}>
+                        <Text style={styles.buttonText}>Reset</Text>
+                    </TouchableOpacity>
                 </View>
-            </Modal>
-        </SafeAreaView>
+
+                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                    <Ionicons name="arrow-back-circle" size={40} color="#597d39" />
+                </TouchableOpacity>
+
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => setModalVisible(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalText}>{loadingMessage}</Text>
+                            {!success ? (
+                                <ActivityIndicator size="large" color="#74b72e" />
+                            ) : (
+                                <FontAwesome5 name="check-circle" size={60} color="#74b72e" />
+                            )}
+                        </View>
+                    </View>
+                </Modal>
+            </SafeAreaView>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'flex-start',
-        alignItems: 'center',
+    },
+    safeArea: {
+        flex: 1,
         padding: 20,
-        backgroundColor: '#d8ffb1',
     },
     title: {
-        fontSize: 30,
+        fontSize: 32,
         fontWeight: 'bold',
-        marginVertical: 30,
         color: '#597d39',
         textAlign: 'center',
-        textShadowColor: '#000',
+        marginVertical: 30,
+        textShadowColor: 'rgba(0, 0, 0, 0.1)',
         textShadowOffset: { width: 1, height: 1 },
         textShadowRadius: 2,
     },
-    buttonContainer: {
-        width: '100%',
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginVertical: 10,
-    },
-    button: {
-        flex: 1,
+    uploadArea: {
+        backgroundColor: '#ffffff',
+        borderRadius: 25,
+        padding: 40,
         alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#a8d38d',
-        paddingVertical: 15,
-        borderRadius: 20,
-        marginHorizontal: 5,
-        elevation: 4,
+        marginBottom: 30,
+        elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+    },
+    uploadText: {
+        marginTop: 20,
+        fontSize: 18,
+        color: '#4a4a4a',
+        textAlign: 'center',
+    },
+    uploadButton: {
+        backgroundColor: '#74b72e',
+        paddingVertical: 15,
+        paddingHorizontal: 40,
+        borderRadius: 30,
+        marginTop: 25,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+    },
+    actionContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 20,
+    },
+    actionButton: {
+        paddingVertical: 15,
+        paddingHorizontal: 40,
+        borderRadius: 30,
+        minWidth: 150,
+        alignItems: 'center',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
     },
     submitButton: {
         backgroundColor: '#74b72e',
-        paddingVertical: 10,
-        paddingHorizontal: 24,
-        borderRadius: 12,
-        marginVertical: 5,
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        right:-30,
     },
     resetButton: {
-        backgroundColor: '#ff4d4d',
-        paddingVertical: 10,
-        paddingHorizontal: 24,
-        borderRadius: 12,
-        marginVertical: 5,
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        left:-40,
-        bottom:1,
+        backgroundColor: '#ff6b6b',
     },
     buttonText: {
         color: '#fff',
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
     },
-    loading: {
-        marginVertical: 20,
-    },
-    previewContainer: {
-        width: '100%',
-        minHeight: 250,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 20,
-        backgroundColor: '#edf4ec',
-        padding: 20,
-        borderRadius: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-    },
-    fileContainer: {
-        marginVertical: 10,
-    },
-    fileText: {
-        fontSize: 18,
-        color: '#2f2f2f',
-    },
-    fileName: {
-        fontSize: 16,
-        color: '#4a4a4a',
-        fontWeight: '600',
-    },
-    imageContainer: {
-        marginVertical: 10,
-        borderWidth: 1,
-        borderColor: '#2f2f2f',
-        borderRadius: 15,
-        overflow: 'hidden',
-    },
-    image: {
-        width: 200,
-        height: 200,
-        borderRadius: 10,
-    },
-    infoText: {
-        fontSize: 16,
-        color: '#999',
+    backButton: {
+        position: 'absolute',
+        top: 35,
+        left: 10,
+        zIndex: 10,
     },
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.6)',
     },
     modalContent: {
         backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 15,
+        padding: 40,
+        borderRadius: 20,
         alignItems: 'center',
+        elevation: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.3,
-        shadowRadius: 6,
+        shadowRadius: 10,
     },
     modalText: {
         fontSize: 20,
-        marginBottom: 20,
+        marginBottom: 25,
         textAlign: 'center',
         color: '#2f2f2f',
-    },
-    backButton: {
-        position: 'absolute',
-        bottom: 20,
-        left: '50%',
-        transform: [{ translateX: -50 }],
-        backgroundColor: '#000',
-        borderRadius: 20,
-        padding: 10,
-        elevation: 4,
+        fontWeight: '600',
     },
 });
 

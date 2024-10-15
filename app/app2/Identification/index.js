@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, 
-  SafeAreaView, ScrollView, Modal, Animated, Dimensions 
+  SafeAreaView, FlatList, Modal, Animated, Dimensions, Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,13 +22,15 @@ const questions = [
 
 const TypingGame = () => {
   const [userAnswers, setUserAnswers] = useState(Array(questions.length).fill(''));
-  const [headerVisible, setHeaderVisible] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showAnswers, setShowAnswers] = useState(false);
   const [score, setScore] = useState(0);
   const router = useRouter();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(height));
+  const [rotateAnim] = useState(new Animated.Value(0));
+  const [progress, setProgress] = useState(0);
+  const flatListRef = useRef(null);
 
   useEffect(() => {
     Animated.parallel([
@@ -44,7 +46,20 @@ const TypingGame = () => {
         useNativeDriver: true,
       }),
     ]).start();
+
+    Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: true,
+      })
+    ).start();
   }, []);
+
+  useEffect(() => {
+    const answeredQuestions = userAnswers.filter(answer => answer.trim() !== '').length;
+    setProgress(answeredQuestions / questions.length);
+  }, [userAnswers]);
 
   const handleSubmit = () => {
     let newScore = 0;
@@ -63,11 +78,6 @@ const TypingGame = () => {
     setUserAnswers(updatedAnswers);
   };
 
-  const handleScroll = (event) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    setHeaderVisible(offsetY === 0);
-  };
-
   const handleQuit = () => {
     router.push('app2/HomePage');
   };
@@ -81,68 +91,79 @@ const TypingGame = () => {
     router.push('app2/HomePage');
   };
 
+  const renderQuestion = ({ item, index }) => (
+    <Animated.View
+      style={[
+        styles.questionContainer,
+        {
+          transform: [
+            {
+              translateY: slideAnim.interpolate({
+                inputRange: [0, height],
+                outputRange: [0, 50 * (index + 1)],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <Text style={styles.question}>{`${index + 1}. ${item.question}`}</Text>
+      <TextInput
+        style={styles.input}
+        value={userAnswers[index]}
+        onChangeText={(text) => handleChange(text, index)}
+        placeholder="Type your answer here"
+        placeholderTextColor="#a0a0a0"
+        returnKeyType="done"
+      />
+      {showAnswers && (
+        <View style={styles.answerContainer}>
+          <Text style={styles.correctAnswer}>Correct: {item.correctAnswer}</Text>
+          <Text style={[
+            styles.userAnswer,
+            userAnswers[index].trim().toLowerCase() === item.correctAnswer.toLowerCase()
+              ? styles.correctUserAnswer
+              : styles.incorrectUserAnswer
+          ]}>
+            Your Answer: {userAnswers[index]}
+            {userAnswers[index].trim().toLowerCase() === item.correctAnswer.toLowerCase() ?
+              ' ✅' : ' ❌'}
+          </Text>
+        </View>
+      )}
+    </Animated.View>
+  );
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
+
   return (
     <LinearGradient
-      colors={['#4c669f', '#3b5998', '#192f6a']}
+      colors={['#4CAF50', '#45a049', '#388E3C']}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          {headerVisible && (
-            <View style={styles.headerContainer}>
-              <Text style={styles.header}>Level 4</Text>
-              <Text style={styles.instructions}>Type your answer to each question below:</Text>
-            </View>
-          )}
-          <ScrollView
+          <View style={styles.headerContainer}>
+            <Animated.View style={{ transform: [{ rotate: spin }] }}>
+              <Ionicons name="leaf" size={48} color="#fff" />
+            </Animated.View>
+            <Text style={styles.header}>Level 4</Text>
+            <Text style={styles.instructions}>Type your answer to each question below:</Text>
+          </View>
+          <View style={styles.progressBarContainer}>
+            <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+          </View>
+          <FlatList
+            ref={flatListRef}
+            data={questions}
+            renderItem={renderQuestion}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContainer}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-          >
-            {questions.map((q, index) => (
-              <Animated.View
-                key={q.id}
-                style={[
-                  styles.questionContainer,
-                  {
-                    transform: [
-                      {
-                        translateY: slideAnim.interpolate({
-                          inputRange: [0, height],
-                          outputRange: [0, 50 * (index + 1)],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <Text style={styles.question}>{`${index + 1}. ${q.question}`}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={userAnswers[index]}
-                  onChangeText={(text) => handleChange(text, index)}
-                  placeholder="Type your answer here"
-                  placeholderTextColor="#a0a0a0"
-                  returnKeyType="done"
-                />
-                {showAnswers && (
-                  <View style={styles.answerContainer}>
-                    <Text style={styles.correctAnswer}>Correct: {q.correctAnswer}</Text>
-                    <Text style={[
-                      styles.userAnswer,
-                      userAnswers[index].trim().toLowerCase() === q.correctAnswer.toLowerCase()
-                        ? styles.correctUserAnswer
-                        : styles.incorrectUserAnswer
-                    ]}>
-                      Your Answer: {userAnswers[index]}
-                      {userAnswers[index].trim().toLowerCase() === q.correctAnswer.toLowerCase() ?
-                        ' ✅' : ' ❌'}
-                    </Text>
-                  </View>
-                )}
-              </Animated.View>
-            ))}
-          </ScrollView>
+          />
         </Animated.View>
 
         <View style={styles.buttonContainer}>
@@ -157,6 +178,9 @@ const TypingGame = () => {
         <Modal visible={showModal} transparent={true} animationType="fade">
           <View style={styles.modalBackground}>
             <View style={styles.modalContainer}>
+              <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                <Ionicons name="trophy" size={64} color="#FFD700" />
+              </Animated.View>
               <Text style={styles.modalText}>Your Score: {score}/{questions.length}</Text>
               <TouchableOpacity style={styles.modalButton} onPress={handleSeeAnswers}>
                 <Text style={styles.modalButtonText}>See Answers</Text>
@@ -188,18 +212,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   header: {
-    fontSize: 36,
+    fontSize: 42,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 5,
+    marginVertical: 10,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
   },
   instructions: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#fff',
     textAlign: 'center',
+    fontWeight: '600',
+  },
+  progressBarContainer: {
+    height: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 5,
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#4CAF50',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -207,45 +243,47 @@ const styles = StyleSheet.create({
   },
   questionContainer: {
     marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 15,
-    padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 20,
+    padding: 25,
     shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 8,
+    elevation: 7,
   },
   question: {
-    fontSize: 18,
-    marginBottom: 10,
-    color: '#333',
-    fontWeight: '600',
+    fontSize: 20,
+    marginBottom: 15,
+    color: '#2c3e50',
+    fontWeight: '700',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    borderRadius: 15,
+    padding: 15,
+    fontSize: 18,
+    backgroundColor: '#f0fff0',
   },
   answerContainer: {
-    marginTop: 10,
+    marginTop: 15,
   },
   correctAnswer: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#4CAF50',
     marginBottom: 5,
+    fontWeight: '600',
   },
   userAnswer: {
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: '600',
   },
   correctUserAnswer: {
     color: '#4CAF50',
   },
   incorrectUserAnswer: {
-    color: '#F44336',
+    color: '#e74c3c',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -255,36 +293,36 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 10,
+    padding: 18,
+    borderRadius: 15,
     width: '45%',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 7,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   quitButton: {
-    backgroundColor: '#F44336',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: '#e74c3c',
+    padding: 18,
+    borderRadius: 15,
     width: '45%',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 7,
   },
   quitButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   modalBackground: {
@@ -306,13 +344,13 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalText: {
-    fontSize: 24,
-    marginBottom: 20,
+    fontSize: 28,
+    marginVertical: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#2c3e50',
   },
   modalButton: {
-    backgroundColor: '#3b5998',
+    backgroundColor: '#4CAF50',
     padding: 15,
     borderRadius: 10,
     width: '100%',

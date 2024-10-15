@@ -1,9 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView, Modal, ScrollView } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView, Modal, ScrollView, StatusBar } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const GameScreen = () => {
   const router = useRouter();
@@ -80,66 +82,13 @@ const GameScreen = () => {
     setSelectedQuestionIndex(null);
     setUsedQuestions(new Set());
     setShuffledLetters([
-      ["S", "H", "O", "T", "M", "E", "T", "A", "R", "P", "O", "H", "I", "S"],
-      ["C", "O", "M", "D", "P", "I", "E", "O", "T", "I", "N"],
-      ["Y", "H", "P", "I", "S", "C", "S"],
+      ["M", "H", "O", "T", "M", "E", "T", "A", "R", "P", "O", "H"],
+      ["N", "B", "R", "E", "K", "W", "D", "O"],
+      ["D", "S", "S", "I", "L", "V", "E", "O"],
     ]);
     setSelectedLetterIndices([]);
+    setScore(0);
   };
-
-  const renderAnswerItem = ({ item, index }) => (
-    <View key={index} style={styles.answerContainer}>
-      <Text style={styles.answerLabel}>Answer:</Text>
-      <TouchableOpacity
-        style={[styles.answerBox, selectedAnswers[index] && styles.mergedQuestionBox]}
-        onPress={() => handleDrop(index)}
-        accessible={true}
-        accessibilityLabel="Answer drop zone"
-      >
-        <Text style={styles.answerText}>
-          {selectedAnswers[index] ? selectedAnswers[index].question : "Your answer will be displayed here."}
-        </Text>
-      </TouchableOpacity>
-
-      <View style={styles.lettersContainer}>
-        <View style={styles.letterRow}>
-          {shuffledLetters[index].map((letter, letterIndex) => (
-            <TouchableOpacity
-              key={letterIndex}
-              style={styles.letterButton}
-              onPress={() => handleLetterPress(index, letterIndex)}
-              accessible={true}
-              accessibilityLabel={`Letter ${letter}`}
-            >
-              <Text style={styles.letterText}>{letter}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={styles.shuffleButton} onPress={() => shuffleLetters(index)}>
-          <Icon name="shuffle" size={30} color="#ffffff" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderQuestionItem = useCallback((item, index) => {
-    if (usedQuestions.has(index)) return null;
-
-    return (
-      <TouchableOpacity
-        key={`question-${index}`}
-        style={[styles.questionBox, selectedQuestionIndex === index && styles.selectedQuestionBox]}
-        onPress={() => handleQuestionPress(index)}
-        accessible={true}
-        accessibilityLabel={`Question ${index + 1}: ${item.question}`}
-      >
-        <Text style={styles.questionText} numberOfLines={2} ellipsizeMode="tail">
-          {item.question}
-        </Text>
-        <Icon name="reorder-three" size={20} color="#ffffff" style={styles.questionIcon} />
-      </TouchableOpacity>
-    );
-  }, [selectedQuestionIndex, usedQuestions]);
 
   const calculateScore = () => {
     let correctAnswersCount = 0;
@@ -193,81 +142,146 @@ const GameScreen = () => {
     });
   };
 
+  const renderAnswerItem = ({ item, index }) => (
+    <BlurView intensity={20} tint="light" style={styles.answerContainer}>
+      <Text style={styles.answerLabel}>Question {index + 1}</Text>
+      <TouchableOpacity
+        style={[styles.answerBox, selectedAnswers[index] && styles.mergedQuestionBox]}
+        onPress={() => handleDrop(index)}
+        accessible={true}
+        accessibilityLabel="Answer drop zone"
+      >
+        <Text style={styles.answerText}>
+          {selectedAnswers[index] ? selectedAnswers[index].question : "Tap to place your answer here"}
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.lettersContainer}>
+        <View style={styles.letterRow}>
+          {shuffledLetters[index].map((letter, letterIndex) => (
+            <TouchableOpacity
+              key={letterIndex}
+              style={[styles.letterButton, selectedLetterIndices.some(item => item.index === index && item.letterIndex === letterIndex) && styles.selectedLetterButton]}
+              onPress={() => handleLetterPress(index, letterIndex)}
+              accessible={true}
+              accessibilityLabel={`Letter ${letter}`}
+            >
+              <Text style={styles.letterText}>{letter}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TouchableOpacity style={styles.shuffleButton} onPress={() => shuffleLetters(index)}>
+          <Ionicons name="shuffle" size={24} color="#ffffff" />
+        </TouchableOpacity>
+      </View>
+    </BlurView>
+  );
+
+  const renderQuestionItem = useCallback((item, index) => {
+    if (usedQuestions.has(index)) return null;
+
+    return (
+      <TouchableOpacity
+        key={`question-${index}`}
+        style={[styles.questionBox, selectedQuestionIndex === index && styles.selectedQuestionBox]}
+        onPress={() => handleQuestionPress(index)}
+        accessible={true}
+        accessibilityLabel={`Question ${index + 1}: ${item.question}`}
+      >
+        <Text style={styles.questionText} numberOfLines={2} ellipsizeMode="tail">
+          {item.question}
+        </Text>
+        <Ionicons name="reorder-three" size={20} color="#ffffff" style={styles.questionIcon} />
+      </TouchableOpacity>
+    );
+  }, [selectedQuestionIndex, usedQuestions]);
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <FlatList
-        data={answers}
-        keyExtractor={(item, index) => `answer-${index}`}
-        renderItem={renderAnswerItem}
-        ListHeaderComponent={
-          <>
-            <Text style={styles.levelText}>Level 3</Text>
-            <Text style={styles.instructionText}>
-              Click on a question to select it, then click on an answer box to place it below.
-            </Text>
-            <View style={styles.questionsContainer}>
-              {answers.map((item, index) => renderQuestionItem(item, index))}
+    <LinearGradient
+      colors={['#2ecc71', '#27ae60']}
+      style={styles.container}
+    >
+      <StatusBar barStyle="light-content" />
+      <SafeAreaView style={styles.safeArea}>
+        <FlatList
+          data={answers}
+          keyExtractor={(item, index) => `answer-${index}`}
+          renderItem={renderAnswerItem}
+          ListHeaderComponent={
+            <>
+              <Text style={styles.levelText}>Level 3</Text>
+              <Text style={styles.instructionText}>
+                Select a question, then place it in an answer box below.
+              </Text>
+              <View style={styles.questionsContainer}>
+                {answers.map((item, index) => renderQuestionItem(item, index))}
+              </View>
+              <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
+                <Text style={styles.resetButtonText}>Reset Game</Text>
+              </TouchableOpacity>
+            </>
+          }
+        />
+
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.quitButton} onPress={handleQuit}>
+            <Text style={styles.buttonText}>Quit</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
+            <Text style={styles.buttonText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Modal visible={showModal} animationType="fade" transparent={true}>
+          <BlurView intensity={80} tint="dark" style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalText}>Your Score: {score.toFixed(2)}%</Text>
+              <TouchableOpacity style={styles.modalButton} onPress={handleSeeAnswers}>
+                <Text style={styles.modalButtonText}>See Answers</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal}>
+                <Text style={styles.modalCloseButtonText}>Close</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
-              <Text style={styles.resetButtonText}>Reset Game</Text>
-            </TouchableOpacity>
-          </>
-        }
-      />
+          </BlurView>
+        </Modal>
 
-      <TouchableOpacity style={styles.quitButton} onPress={handleQuit}>
-        <Text style={styles.quitButtonText}>Quit</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
-        <Text style={styles.doneButtonText}>Done</Text>
-      </TouchableOpacity>
-
-      <Modal visible={showModal} animationType="slide" transparent={true}>
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Your Score: {score.toFixed(2)}%</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={handleSeeAnswers}>
-              <Text style={styles.modalButtonText}>See Answers</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal}>
-              <Text style={styles.modalCloseButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={showAnswersModal} animationType="slide" transparent={true}>
-        <View style={styles.modalBackground}>
-          <View style={styles.answersModalContainer}>
-            <ScrollView style={styles.answersScrollView}>
-              {renderAnswers()}
-            </ScrollView>
-            <TouchableOpacity style={styles.modalCloseButton} onPress={closeAnswersModal}>
-              <Text style={styles.modalCloseButtonText}>Back to Home</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        <Modal visible={showAnswersModal} animationType="slide" transparent={true}>
+          <BlurView intensity={80} tint="dark" style={styles.modalBackground}>
+            <View style={styles.answersModalContainer}>
+              <ScrollView style={styles.answersScrollView}>
+                {renderAnswers()}
+              </ScrollView>
+              <TouchableOpacity style={styles.modalCloseButton} onPress={closeAnswersModal}>
+                <Text style={styles.modalCloseButtonText}>Back to Home</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+        </Modal>
+      </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: '#1C7AE0',
+    paddingHorizontal: 20,
   },
   levelText: {
     fontSize: 48,
     fontWeight: '800',
     color: '#ffffff',
-    marginBottom: 15,
+    marginVertical: 20,
     textAlign: 'center',
     fontFamily: 'Inter-ExtraBold',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   instructionText: {
     fontSize: 18,
@@ -280,63 +294,56 @@ const styles = StyleSheet.create({
   },
   questionsContainer: {
     marginBottom: 25,
-    width: width * 0.95,
+    width: width - 40,
     alignSelf: 'center',
   },
   answerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 20,
-    elevation: 8,
     marginBottom: 20,
     padding: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    overflow: 'hidden',
+  },
+  answerLabel: {
+    fontSize: 16,
+    color: '#ffffff',
+    marginBottom: 10,
+    fontWeight: 'bold',
   },
   questionBox: {
-    backgroundColor: 'rgba(61, 109, 161, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     padding: 15,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    height: 'auto',
-    borderColor: '#fff',
-    borderWidth: 2,
     marginBottom: 15,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   selectedQuestionBox: {
-    backgroundColor: 'rgba(61, 109, 161, 1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
     transform: [{ scale: 1.05 }],
   },
   answerBox: {
-    backgroundColor: 'rgba(61, 109, 161, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 15,
-    borderWidth: 2,
-    borderColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 15,
-    elevation: 5,
-    padding: 10,
+    padding: 15,
     minHeight: 60,
   },
   mergedQuestionBox: {
-    backgroundColor: 'rgba(61, 109, 161, 1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
   answerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
     color: '#ffffff',
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Inter-Medium',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
   lettersContainer: {
     flexDirection: 'column',
@@ -348,89 +355,76 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    maxWidth: width * 0.95,
+    maxWidth: width - 40,
   },
   letterButton: {
-    backgroundColor: 'rgba(61, 109, 161, 0.9)',
-    padding: 12,
-    margin: 6,
-    borderRadius: 10,
-    elevation: 5,
-    width: 45,
-    height: 45,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    padding: 10,
+    margin: 4,
+    borderRadius: 8,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#ffffff',
+  },
+  selectedLetterButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
   letterText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
   shuffleButton: {
-    backgroundColor: 'rgba(61, 109, 161, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 10,
-    padding: 12,
+    padding: 10,
     marginTop: 15,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ffffff',
   },
   questionText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#FFFFFF',
     fontWeight: 'bold',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
   resetButton: {
-    backgroundColor: '#E53E3E',
+    backgroundColor: '#e74c3c',
     borderRadius: 10,
     padding: 12,
     alignItems: 'center',
     marginTop: 25,
-    elevation: 5,
+    bottom:20, 
   },
   resetButtonText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 16,
   },
-  questionIcon: {
-    marginTop: 10,
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
   quitButton: {
-    backgroundColor: '#FF0000',
+    backgroundColor: '#e74c3c',
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    marginHorizontal: 20,
-    elevation: 5,
-  },
-  quitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
+    flex: 1,
+    marginRight: 10,
   },
   doneButton: {
-    backgroundColor: '#3D6DA1',
+    backgroundColor: '#3498db',
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    marginHorizontal: 20,
-    elevation: 5,
+    flex: 1,
+    marginLeft: 10,
   },
-  doneButtonText: {
+  buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
@@ -439,24 +433,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   modalContainer: {
     width: '85%',
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     padding: 25,
     borderRadius: 20,
     alignItems: 'center',
-    elevation: 10,
   },
   answersModalContainer: {
     width: '90%',
     height: '80%',
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     padding: 25,
     borderRadius: 20,
     alignItems: 'center',
-    elevation: 10,
   },
   answersScrollView: {
     width: '100%',
@@ -464,8 +455,8 @@ const styles = StyleSheet.create({
   },
   answerItem: {
     marginBottom: 20,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
+    padding: 15,
+    backgroundColor: 'rgba(240, 240, 240, 0.8)',
     borderRadius: 10,
   },
   answerItemText: {
@@ -473,17 +464,16 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   correctAnswer: {
-    color: 'green',
+    color: '#27ae60',
   },
   wrongAnswer: {
-    color: 'red',
+    color: '#e74c3c',
   },
   modalButton: {
-    backgroundColor: '#3D6DA1',
+    backgroundColor: '#3498db',
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 10,
-    elevation: 5,
     marginBottom: 10,
   },
   modalButtonText: {
@@ -492,16 +482,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   modalCloseButton: {
-    backgroundColor: '#FF6347',
+    backgroundColor: '#e74c3c',
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 10,
-    elevation: 5,
   },
   modalCloseButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  modalText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 

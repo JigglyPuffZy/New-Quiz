@@ -1,98 +1,68 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Animated, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 const TriviaGameScreen = () => {
-  const animatedValue = new Animated.Value(1);
   const router = useRouter();
+  const fadeAnim = new Animated.Value(0);
+  const scaleAnim = new Animated.Value(0.5);
 
-  const onPressIn = () => {
-    Animated.spring(animatedValue, {
-      toValue: 0.95,
-      friction: 5,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const onPressOut = () => {
-    Animated.spring(animatedValue, {
-      toValue: 1,
-      friction: 5,
-      useNativeDriver: true,
-    }).start();
-  };
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header with icons */}
-        <View style={styles.header}>
-          <Image 
-            source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3406/3406808.png' }}
-            style={styles.icon}
-          />
-        </View>
+      <LinearGradient
+        colors={['#2ecc71', '#27ae60', '#1abc9c']}
+        style={styles.container}
+      >
+        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+          <Ionicons name="leaf" size={48} color="#FFFFFF" />
+          <Text style={styles.headerText}>QuizWhirl</Text>
+        </Animated.View>
 
-        {/* Main game section */}
-        <View style={styles.gameSection}>
-          {/* Left section with Samurai */}
-          <View style={styles.leftPanel}>
+        <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
+          <Image
+            source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3874/3874176.png' }}
+            style={styles.mainImage}
+          />
+          <Text style={styles.title}>Grow Your Knowledge</Text>
+          <Text style={styles.description}>
+          Enjoy an interactive platform designed for secondary and tertiary students to review quizzes and exams while making learning fun and engaging.
+          </Text>
+        </Animated.View>
+
+        <Animated.View style={[styles.buttonContainer, { opacity: fadeAnim }]}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push('app2/Nickname')}
+          >
             <LinearGradient
-              colors={['#1C7AE0', '#3D6DA1']}
+              colors={['#27ae60', '#2ecc71']}
               start={[0, 0]}
               end={[1, 1]}
-              style={styles.leftGradient}
+              style={styles.buttonGradient}
             >
-              <Text style={styles.playText}>PLAY FOR FUN</Text>
-              <Image
-                source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3874/3874176.png' }}
-                style={styles.samuraiImage}
-              />
+              <Text style={styles.buttonText}>Start Learning</Text>
+              <Ionicons name="arrow-forward-circle" size={28} color="#FFFFFF" style={styles.buttonIcon} />
             </LinearGradient>
-          </View>
-
-          {/* Right section with avatars */}
-          <View style={styles.rightPanel}>
-            <View style={styles.avatarWrapper}>
-              <Image
-                source={{ uri: 'https://cdn-icons-png.flaticon.com/512/186/186313.png' }}
-                style={styles.avatarImage}
-              />
-              <Text style={styles.challengeText}>Play to Learn!</Text>
-            </View>
-            <View style={styles.avatarWrapper}>
-              <Image
-                source={{ uri: 'https://cdn-icons-png.flaticon.com/512/5691/5691850.png' }}
-                style={styles.avatarImage}
-              />
-            </View>
-          </View>
-        </View>
-
-        
-        {/*  Game Quiz Section */}
-        <View style={styles.quizSection}>
-          <Text style={styles.quizTitle}>Quiz Whirl Game Quiz</Text>
-          <Text style={styles.quizDescription}>
-          Welcome to QuizWhirl! Enjoy an interactive platform designed for secondary and tertiary students to review quizzes and exams while making learning fun and engaging.
-          </Text>
-        </View>
-
-        {/* Get Started Button */}
-        <TouchableOpacity 
-          onPress={() => router.push('app2/Nickname')}
-          style={styles.getStartedButton} activeOpacity={0.7}>
-          <LinearGradient
-            colors={['#1C7AE0', '#3D6DA1']}
-            start={[0, 0]}
-            end={[1, 1]}
-            style={styles.gradientButton}
-          >
-            <Text style={styles.getStartedText}>Get Started</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        </Animated.View>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
@@ -100,141 +70,86 @@ const TriviaGameScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F6F6F9',
   },
   container: {
     flex: 1,
-    backgroundColor: '#F6F6F9',
-    paddingHorizontal: 20,
+    padding: 24,
     justifyContent: 'space-between',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    paddingVertical: 20,
-  },
-  icon: {
-    width: 70,
-    height: 70,
-  },
-  gameSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  leftPanel: {
-    flex: 1,
-    marginRight: 10,
-  },
-  leftGradient: {
-    borderRadius: 15,
-    padding: 20,
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 10,
+    marginTop: 24,
   },
-  playText: {
+  headerText: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginLeft: 12,
+    fontFamily: 'System',
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  content: {
+    alignItems: 'center',
+  },
+  mainImage: {
+    width: 280,
+    height: 280,
+    marginBottom: 36,
+    borderRadius: 140,
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+  },
+  title: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 18,
+    fontFamily: 'System',
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  description: {
+    fontSize: 20,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 36,
+    opacity: 0.9,
+    fontFamily: 'System',
+    lineHeight: 28,
+  },
+  buttonContainer: {
+    marginBottom: 48,
+  },
+  button: {
+    borderRadius: 30,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  buttonGradient: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 28,
+  },
+  buttonText: {
     color: '#FFFFFF',
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
+    marginRight: 12,
+    fontFamily: 'System',
   },
-  samuraiImage: {
-    width: 90,
-    height: 90,
-  },
-  rightPanel: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  avatarWrapper: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#1C7AE0',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 8,
-    marginBottom: 15,
-  },
-  avatarImage: {
-    width: 80,
-    height: 80,
-    marginBottom: 10,
-  },
-  challengeText: {
-    fontSize: 14,
-    color: '#000',
-    textAlign: 'center',
-    fontWeight: '600',
-  },
- 
-  buttonInner: {
-    flexDirection: 'row',
-    backgroundColor: '#3D6DA1',
-    borderRadius: 50,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    alignItems: 'center',
-    shadowColor: '#1C7AE0',
-    shadowOffset: { width: 1, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 15,
-    elevation: 10,
-  },
-
-  funGamesText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  quizSection: {
-    alignItems: 'center',
-    paddingVertical: 30,
-  },
-  quizTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#333333',
-    bottom:50,
-  },
-  quizDescription: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    marginTop: 10,
-    bottom:50,
-  },
-  getStartedButton: {
-    marginBottom: 40,
-    alignSelf: 'center',
-    width: '75%',
-    borderRadius: 50,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 15,
-    elevation: 10,
-    bottom:70,
-
-  },
-  gradientButton: {
-    paddingVertical: 18,
-    borderRadius: 50,
-    alignItems: 'center',
-  },
-  getStartedText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+  buttonIcon: {
+    marginLeft: 6,
   },
 });
 
