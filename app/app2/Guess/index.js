@@ -143,8 +143,8 @@ const GameScreen = () => {
   };
 
   const renderAnswerItem = ({ item, index }) => (
-    <BlurView intensity={20} tint="light" style={styles.answerContainer}>
-      <Text style={styles.answerLabel}>Question {index + 1}</Text>
+    <BlurView intensity={20} tint="dark" style={styles.answerContainer}>
+      <Text style={styles.answerLabel}>Q𝔲𝔢𝔰𝔱𝔦𝔬𝔫 {index + 1}</Text>
       <TouchableOpacity
         style={[styles.answerBox, selectedAnswers[index] && styles.mergedQuestionBox]}
         onPress={() => handleDrop(index)}
@@ -171,7 +171,7 @@ const GameScreen = () => {
           ))}
         </View>
         <TouchableOpacity style={styles.shuffleButton} onPress={() => shuffleLetters(index)}>
-          <Ionicons name="shuffle" size={24} color="#ffffff" />
+          <Ionicons name="shuffle" size={35} color="#ffffed" />
         </TouchableOpacity>
       </View>
     </BlurView>
@@ -191,17 +191,17 @@ const GameScreen = () => {
         <Text style={styles.questionText} numberOfLines={2} ellipsizeMode="tail">
           {item.question}
         </Text>
-        <Ionicons name="reorder-three" size={20} color="#ffffff" style={styles.questionIcon} />
+        <Ionicons name="reorder-three" size={25} color="#fee135" style={styles.questionIcon} />
       </TouchableOpacity>
     );
   }, [selectedQuestionIndex, usedQuestions]);
 
   return (
     <LinearGradient
-      colors={['#2ecc71', '#27ae60']}
+      colors={['#d8ffb1', '#aef359']}
       style={styles.container}
     >
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safeArea}>
         <FlatList
           data={answers}
@@ -209,7 +209,7 @@ const GameScreen = () => {
           renderItem={renderAnswerItem}
           ListHeaderComponent={
             <>
-              <Text style={styles.levelText}>Level 3</Text>
+              <Text style={styles.levelText}> G𝔲𝔢𝔰𝔰: D𝔯𝔬𝔭 𝔞𝔫𝔡 D𝔬𝔴𝔫 </Text>
               <Text style={styles.instructionText}>
                 Select a question, then place it in an answer box below.
               </Text>
@@ -217,7 +217,7 @@ const GameScreen = () => {
                 {answers.map((item, index) => renderQuestionItem(item, index))}
               </View>
               <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
-                <Text style={styles.resetButtonText}>Reset Game</Text>
+                <Text style={styles.resetButtonText}>↻</Text>
               </TouchableOpacity>
             </>
           }
@@ -234,18 +234,15 @@ const GameScreen = () => {
         </View>
 
         <Modal visible={showModal} animationType="fade" transparent={true}>
-          <BlurView intensity={80} tint="dark" style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalText}>Your Score: {score.toFixed(2)}%</Text>
-              <TouchableOpacity style={styles.modalButton} onPress={handleSeeAnswers}>
-                <Text style={styles.modalButtonText}>See Answers</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal}>
-                <Text style={styles.modalCloseButtonText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </BlurView>
-        </Modal>
+    <BlurView intensity={90} tint="dark" style={styles.modalBackground}>
+        <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>Your Score: {score.toFixed(2)}%</Text>
+            <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal}>
+                <Text style={styles.modalCloseButtonText}>Back to Home</Text>
+            </TouchableOpacity>
+        </View>
+    </BlurView>
+</Modal>
 
         <Modal visible={showAnswersModal} animationType="slide" transparent={true}>
           <BlurView intensity={80} tint="dark" style={styles.modalBackground}>
@@ -273,23 +270,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   levelText: {
-    fontSize: 48,
-    fontWeight: '800',
-    color: '#ffffff',
-    marginVertical: 20,
+    color: '#fee135',
+    fontSize: 30,
+    fontWeight: '900',
+    marginVertical: 25,
     textAlign: 'center',
-    fontFamily: 'Inter-ExtraBold',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
+    textShadowColor: '#2b2713',
+    textShadowOffset: { width: 3, height: 2 },
+    textShadowRadius: 5,
+    elevation: 5,
+    letterSpacing: 1,
+    transform: [{ scale: 1.1 }]
+},
   instructionText: {
-    fontSize: 18,
-    color: '#fff',
+    fontSize: 15,
+    color: '#354a21',
+    fontFamily: 'Poppins-Regular',
+    marginBottom: 20,
+    top: 15,
     textAlign: 'center',
-    marginBottom: 25,
-    fontStyle: 'italic',
-    fontFamily: 'Inter-Medium',
     letterSpacing: 0.5,
   },
   questionsContainer: {
@@ -298,33 +297,48 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   answerContainer: {
-    borderRadius: 20,
-    marginBottom: 20,
-    padding: 15,
+    borderRadius: 22,
+    marginBottom: 22,
+    padding: 18,
     overflow: 'hidden',
-  },
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4
+},
   answerLabel: {
-    fontSize: 16,
-    color: '#ffffff',
+    fontSize: 20,
+    color: '#354a21',
+    fontFamily: 'Poppins-Regular',
     marginBottom: 10,
+    textAlign: 'center',
     fontWeight: 'bold',
+    textShadowOffset: { width: 2, height: 1 },
+    textShadowRadius: 3,
+    textShadowColor: '#F5f5d1',
   },
   questionBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    padding: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    padding: 22,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowColor: '#c79602',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)'
+},
   selectedQuestionBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: '#aef359',
     transform: [{ scale: 1.05 }],
   },
   answerBox: {
@@ -337,11 +351,11 @@ const styles = StyleSheet.create({
     minHeight: 60,
   },
   mergedQuestionBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: '#aef359',
   },
   answerText: {
-    fontSize: 16,
-    color: '#ffffff',
+    fontSize: 15,
+    color: '#354a21',
     fontFamily: 'Inter-Medium',
     textAlign: 'center',
   },
@@ -349,7 +363,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 15,
+    marginTop: 5,
   },
   letterRow: {
     flexDirection: 'row',
@@ -358,48 +372,59 @@ const styles = StyleSheet.create({
     maxWidth: width - 40,
   },
   letterButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    padding: 10,
-    margin: 4,
-    borderRadius: 8,
-    width: 40,
-    height: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    padding: 12,
+    margin: 5,
+    borderRadius: 12,
+    width: 45,
+    height: 45,
     alignItems: 'center',
     justifyContent: 'center',
-  },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)'
+},
   selectedLetterButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: '#aef359',
   },
   letterText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#354a21',
   },
   shuffleButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '',
     borderRadius: 10,
     padding: 10,
     marginTop: 15,
     alignItems: 'center',
   },
   questionText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontFamily: 'Poppins-Regular',
+    color: '#354a21',
+    fontWeight: '',
     textAlign: 'center',
   },
   resetButton: {
     backgroundColor: '#e74c3c',
-    borderRadius: 10,
+    borderRadius: 100,
     padding: 12,
+    paddingVertical: 12,
+    width: 65,
+    left: 165,
     alignItems: 'center',
-    marginTop: 25,
-    bottom:20, 
+    marginTop: 1,
+    bottom: 25, 
   },
   resetButtonText: {
-    color: '#FFFFFF',
+    color: '#ffffed',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 30,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -416,7 +441,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   doneButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#fee135',
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
@@ -425,7 +450,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#ffffed',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -470,14 +495,14 @@ const styles = StyleSheet.create({
     color: '#e74c3c',
   },
   modalButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#fee135',
     paddingVertical: 12,
     paddingHorizontal: 25,
-    borderRadius: 10,
+    borderRadius: 13,
     marginBottom: 10,
   },
   modalButtonText: {
-    color: '#fff',
+    color: '#ffffed',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -488,7 +513,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   modalCloseButtonText: {
-    color: '#fff',
+    color: '#fffed',
     fontSize: 18,
     fontWeight: 'bold',
   },

@@ -11,10 +11,10 @@ const { width, height } = Dimensions.get('window');
 
 const levelIcons = ['brain', 'puzzle', 'lightbulb-on', 'telescope'];
 const levelColors = [
-  ['#FF6B6B', '#FF8E8E'],
-  ['#4ECDC4', '#45B7A8'],
-  ['#FFA500', '#FF8C00'],
-  ['#9B59B6', '#8E44AD'],
+  ['#fee135', '#9fbf64'],
+  ['#fee135', '#9fbf64'],
+  ['#9fbf64', '#fee135'],
+  ['#9fbf64', '#fee135'],
 ];
 
 export default function Dashboard() {
@@ -58,19 +58,23 @@ export default function Dashboard() {
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      <LinearGradient colors={['#1A2980', '#26D0CE']} style={styles.gradient}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <LinearGradient colors={['#d8ffb1', '#aef359']} style={styles.gradient}>
         <Svg height="30%" width="100%" style={styles.svgCurve}>
           <Path
-            fill="#26D0CE"
+            fill="#d8ffb1"
             d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,213.3C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
           />
         </Svg>
-        <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.scrollContainer} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContentContainer}
+        >
           <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
             <View style={styles.header}>
-              <Text style={styles.greeting}>Welcome to</Text>
-              <Text style={styles.appName}>Quiz Whirl</Text>
+              <Text style={styles.greeting}>ʏᴏᴜ ᴍᴀʏ ɴᴏᴡ ᴛᴀᴋᴇ ɪᴛ!</Text>
+              <Text style={styles.appName}>Q𝖚𝖎𝖟 𝕿𝖎𝖒𝖊</Text>
             </View>
 
             <Text style={styles.subtitle}>Choose your challenge:</Text>
@@ -88,9 +92,9 @@ export default function Dashboard() {
                     end={{x: 1, y: 1}}
                     style={[styles.card, selectedLevel === level && styles.selectedCard]}
                   >
-                    <MaterialCommunityIcons name={levelIcons[level - 1]} size={40} color="#FFF" />
+                    <MaterialCommunityIcons name={levelIcons[level - 1]} size={40} color="#354a21" />
                     <View style={styles.cardContent}>
-                      <Text style={styles.cardTitle}>Level {level}</Text>
+                      <Text style={styles.cardTitle}>𝕷𝖊𝖛𝖊𝖑 {level}</Text>
                       <Text style={styles.cardSubtitle}>
                         {['Multiple Choice', 'Drag and Drop', 'Guess', 'Identification'][level - 1]}
                       </Text>
@@ -101,7 +105,8 @@ export default function Dashboard() {
             </View>
           </Animated.View>
         </ScrollView>
-        <View style={styles.bottomBar}>
+
+        <View style={styles.buttonWrapper}>
           <Button
             mode="contained"
             icon="trophy"
@@ -109,15 +114,19 @@ export default function Dashboard() {
             style={styles.overallScoreButton}
             labelStyle={styles.overallScoreButtonLabel}
           >
-            Overall Score
+            OVERALL SCORE
           </Button>
-          <FAB
-            style={styles.fab}
+          
+          <Button
+            mode="contained"
             icon="play"
-            label="Start Quiz"
             onPress={handleStartPress}
             disabled={!selectedLevel}
-          />
+            style={styles.startButton}
+            labelStyle={styles.startButtonLabel}
+          >
+            START QUIZ
+          </Button>
         </View>
       </LinearGradient>
     </View>
@@ -138,6 +147,9 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
   },
+  scrollContentContainer: {
+    paddingBottom: 120, // Added padding to account for bottom buttons
+  },
   content: {
     padding: 20,
     paddingTop: StatusBar.currentHeight + 40,
@@ -147,25 +159,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   greeting: {
-    fontSize: 24,
-    color: '#FFF',
-    fontFamily: 'Poppins-Regular',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    fontSize: 20,
+    color: '#354a21',
+    textShadowColor: '#fee135',
+    textShadowOffset: { width: 2, height: 3 },
+    textShadowRadius: 4,
   },
   appName: {
     fontSize: 52,
     fontWeight: 'bold',
-    color: '#FFF',
-    fontFamily: 'DancingScript-Bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 2, height: 2 },
+    color: '#354a21',
+    textShadowOffset: { width: 3, height: 1 },
     textShadowRadius: 5,
+    textShadowColor: '#fee135',
+    marginTop: 10,
   },
   subtitle: {
     fontSize: 22,
-    color: '#FFF',
+    color: '#354a21',
     fontFamily: 'Poppins-Regular',
     marginBottom: 20,
     textAlign: 'center',
@@ -173,29 +184,35 @@ const styles = StyleSheet.create({
   cardsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between', // Keep space-between
+    paddingHorizontal: 5,
+
   },
   cardWrapper: {
-    width: width * 0.43,
+    width: width * 0.42, // Keep original width
     aspectRatio: 1,
     marginBottom: 20,
+    // Removed any horizontal margins to keep original layout
   },
   card: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 30,
     padding: 15,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { 
+      width: 0, 
+      height: 4 
+    },
     shadowOpacity: 0.3,
     shadowRadius: 5,
   },
   selectedCard: {
     transform: [{ scale: 1.05 }],
     borderWidth: 3,
-    borderColor: '#FFF',
+    borderColor: '#fff205',
   },
   cardContent: {
     alignItems: 'center',
@@ -203,38 +220,55 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFF',
+    color: '#354a21',
     fontFamily: 'Poppins-Bold',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    textShadowColor: '#fee135',
   },
   cardSubtitle: {
     fontSize: 12,
-    color: '#FFF',
+    color: '#354a21',
     fontFamily: 'Poppins-Regular',
     textAlign: 'center',
     marginTop: 5,
   },
-  bottomBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 15,
+  buttonWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'column',
+    padding: 20,
+    gap: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   overallScoreButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#fee135',
     borderRadius: 30,
     elevation: 5,
+    paddingVertical: 5,
   },
   overallScoreButtonLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontSize: 16,
     fontFamily: 'Poppins-Bold',
+    color: '#354a21',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    textShadowColor: '#9fbf64',
   },
-  fab: {
-    backgroundColor: '#4ECDC4',
+  startButton: {
+    backgroundColor: '#b9db92',
+    borderRadius: 30,
     elevation: 5,
+    paddingVertical: 5,
+  },
+  startButtonLabel: {
+    fontSize: 16,
+    fontFamily: 'Poppins-Bold',
+    color: '#354a21',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    textShadowColor: '#fee135',
   },
 });

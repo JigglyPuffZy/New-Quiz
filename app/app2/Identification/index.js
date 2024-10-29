@@ -88,6 +88,7 @@ const TypingGame = () => {
   };
 
   const handleGoHome = () => {
+    setShowModal(false);
     router.push('app2/HomePage');
   };
 
@@ -141,16 +142,16 @@ const TypingGame = () => {
 
   return (
     <LinearGradient
-      colors={['#4CAF50', '#45a049', '#388E3C']}
+      colors={['#d8ffb1', '#45a049', '#aef359']}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           <View style={styles.headerContainer}>
             <Animated.View style={{ transform: [{ rotate: spin }] }}>
-              <Ionicons name="leaf" size={48} color="#fff" />
+              <Ionicons name="leaf" size={48} color="#028a0f" />
             </Animated.View>
-            <Text style={styles.header}>Level 4</Text>
+            <Text style={styles.header}> I𝔡𝔢𝔫𝔱𝔦𝔣𝔦𝔠𝔞𝔱𝔦𝔬𝔫 </Text>
             <Text style={styles.instructions}>Type your answer to each question below:</Text>
           </View>
           <View style={styles.progressBarContainer}>
@@ -164,7 +165,7 @@ const TypingGame = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContainer}
           />
-        </Animated.View>
+        </Animated.View> 
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={handleSubmit}>
@@ -178,16 +179,29 @@ const TypingGame = () => {
         <Modal visible={showModal} transparent={true} animationType="fade">
           <View style={styles.modalBackground}>
             <View style={styles.modalContainer}>
-              <Animated.View style={{ transform: [{ rotate: spin }] }}>
-                <Ionicons name="trophy" size={64} color="#FFD700" />
-              </Animated.View>
-              <Text style={styles.modalText}>Your Score: {score}/{questions.length}</Text>
-              <TouchableOpacity style={styles.modalButton} onPress={handleSeeAnswers}>
-                <Text style={styles.modalButtonText}>See Answers</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={handleGoHome}>
-                <Text style={styles.modalButtonText}>Go to Home Page</Text>
-              </TouchableOpacity>
+              <View style={styles.modalContent}>
+                <Animated.View style={[styles.iconWrapper, { transform: [{ rotate: spin }] }]}>
+                  <Ionicons name="trophy" size={80} color="#FFD700" />
+                </Animated.View>
+                
+                <View style={styles.resultContainer}>
+                  <Text style={styles.congratsText}>Excellent Work!</Text>
+                  <Text style={styles.scoreText}>{score} correct out of {questions.length}</Text>
+                  <View style={styles.percentageWrapper}>
+                    <Text style={styles.percentageText}>
+                      {Math.round((score / questions.length) * 100)}%
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.homeButton} 
+                  onPress={handleGoHome}
+                >
+                  <Ionicons name="home-outline" size={24} color="#fff" />
+                  <Text style={styles.homeButtonText}>Return Home</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -195,173 +209,254 @@ const TypingGame = () => {
     </LinearGradient>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   safeArea: {
     flex: 1,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: 24,
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+    paddingVertical: 12,
   },
   header: {
-    fontSize: 42,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginVertical: 10,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    color: '#fee135',
+    fontSize: 48,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginVertical: 24,
+    textShadowColor: '#2b2713',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 6,
+    letterSpacing: 1.2,
   },
   instructions: {
-    fontSize: 20,
-    color: '#fff',
+    fontSize: 18,
+    color: '#354a21',
+    fontFamily: 'Poppins-Regular',
+    marginBottom: 8,
     textAlign: 'center',
+    letterSpacing: 0.5,
     fontWeight: '600',
+    lineHeight: 24,
   },
   progressBarContainer: {
-    height: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 5,
-    marginBottom: 20,
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 8,
+    marginBottom: 24,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(53, 74, 33, 0.1)',
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#fee135',
+    borderRadius: 8,
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingBottom: 24,
   },
   questionContainer: {
-    marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 20,
-    padding: 25,
+    marginBottom: 28,
+    backgroundColor: '#F5f5d1',
+    borderRadius: 28,
+    padding: 32,
     shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 8,
-    elevation: 7,
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 16,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(254, 225, 53, 0.4)',
   },
   question: {
-    fontSize: 20,
-    marginBottom: 15,
-    color: '#2c3e50',
+    fontSize: 22,
+    marginBottom: 20,
+    color: '#354a21',
     fontWeight: '700',
+    lineHeight: 30,
   },
   input: {
     borderWidth: 2,
-    borderColor: '#4CAF50',
-    borderRadius: 15,
-    padding: 15,
+    borderColor: '#fee135',
+    borderRadius: 16,
+    padding: 16,
     fontSize: 18,
     backgroundColor: '#f0fff0',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
   },
   answerContainer: {
-    marginTop: 15,
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 12,
   },
   correctAnswer: {
     fontSize: 16,
     color: '#4CAF50',
-    marginBottom: 5,
+    marginBottom: 8,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   userAnswer: {
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   correctUserAnswer: {
     color: '#4CAF50',
+    fontWeight: '700',
   },
   incorrectUserAnswer: {
     color: '#e74c3c',
+    fontWeight: '700',
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 16,
   },
   button: {
     backgroundColor: '#4CAF50',
     padding: 18,
-    borderRadius: 15,
-    width: '45%',
+    borderRadius: 20,
+    flex: 1,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 7,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   quitButton: {
     backgroundColor: '#e74c3c',
     padding: 18,
-    borderRadius: 15,
-    width: '45%',
+    borderRadius: 20,
+    flex: 1,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 7,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   quitButtonText: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   modalBackground: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    width: '80%',
+    width: '90%',
     backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 30,
-    alignItems: 'center',
+    borderRadius: 32,
+    padding: 32,
     shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 20,
+    elevation: 10,
   },
-  modalText: {
-    fontSize: 28,
-    marginVertical: 20,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
-  modalButton: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 10,
-    width: '100%',
+  modalContent: {
     alignItems: 'center',
-    marginBottom: 10,
+    gap: 24,
   },
-  modalButtonText: {
+  iconWrapper: {
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    padding: 28,
+    borderRadius: 70,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(254, 225, 53, 0.3)',
+  },
+  resultContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+    gap: 16,
+  },
+  congratsText: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#2c3e50',
+    marginBottom: 16,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  scoreText: {
+    fontSize: 26,
+    color: '#45a049',
+    fontWeight: '700',
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  percentageWrapper: {
+    backgroundColor: '#f0fff0',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(69, 160, 73, 0.2)',
+  },
+  percentageText: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#45a049',
+    letterSpacing: 1,
+  },
+  homeButton: {
+    backgroundColor: '#45a049',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 24,
+    width: '100%',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  homeButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  }
 });
 
 export default TypingGame;

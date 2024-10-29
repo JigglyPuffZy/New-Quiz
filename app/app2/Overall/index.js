@@ -1,24 +1,40 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
 export default function OverallScore({ scores = [], totalQuestions = 0 }) {
+  const navigation = useNavigation();
   const totalScore = scores.reduce((sum, score) => sum + score, 0);
   const maxPossibleScore = totalQuestions * scores.length;
   const overallPercentage = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
 
+  const getGradeColor = (percentage) => {
+    if (percentage >= 90) return '#2ecc71';
+    if (percentage >= 80) return '#3498db';
+    if (percentage >= 70) return '#f1c40f';
+    if (percentage >= 60) return '#e67e22';
+    return '#e74c3c';
+  };
+
   return (
     <LinearGradient
-      colors={['#2ecc71', '#27ae60']}
+      colors={['#3498db', '#2980b9']}
       style={styles.container}
     >
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="arrow-back" size={24} color="white" />
+      </TouchableOpacity>
       <Text style={styles.title}>Performance Overview</Text>
       <View style={styles.scoreCard}>
         <View style={styles.percentageContainer}>
-          <Text style={styles.percentageText}>{overallPercentage.toFixed(1)}%</Text>
-          <Text style={styles.percentageLabel}>Overall</Text>
+          <Text style={[styles.percentageText, { color: getGradeColor(overallPercentage) }]}>
+            {overallPercentage.toFixed(1)}%
+          </Text>
+          <Text style={styles.percentageLabel}>Overall Score</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.detailsContainer}>
@@ -27,7 +43,15 @@ export default function OverallScore({ scores = [], totalQuestions = 0 }) {
             <View key={index} style={styles.levelScoreContainer}>
               <Text style={styles.levelLabel}>Level {index + 1}</Text>
               <View style={styles.progressBar}>
-                <View style={[styles.progress, { width: `${totalQuestions > 0 ? (score / totalQuestions) * 100 : 0}%` }]} />
+                <View 
+                  style={[
+                    styles.progress, 
+                    { 
+                      width: `${totalQuestions > 0 ? (score / totalQuestions) * 100 : 0}%`,
+                      backgroundColor: getGradeColor((score / totalQuestions) * 100)
+                    }
+                  ]} 
+                />
               </View>
               <Text style={styles.levelScore}>{score}/{totalQuestions}</Text>
             </View>
@@ -44,6 +68,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 1,
   },
   title: {
     fontSize: 28,
@@ -69,7 +99,6 @@ const styles = StyleSheet.create({
   percentageText: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#2ecc71',
   },
   percentageLabel: {
     fontSize: 16,
@@ -108,7 +137,6 @@ const styles = StyleSheet.create({
   },
   progress: {
     height: '100%',
-    backgroundColor: '#2ecc71',
     borderRadius: 4,
   },
   levelScore: {

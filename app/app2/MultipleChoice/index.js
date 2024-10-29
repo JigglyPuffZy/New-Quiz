@@ -25,11 +25,11 @@ const MultipleChoiceTest = () => {
   const [isResultsVisible, setIsResultsVisible] = useState(false);
   const [score, setScore] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isFinished, setIsFinished] = useState(false); // New state to track if the quiz is finished
+  const [isFinished, setIsFinished] = useState(false);
   const router = useRouter();
 
   const handleAnswerSelect = (questionId, choice) => {
-    if (!isFinished) { // Check if the quiz is not finished before allowing answer selection
+    if (!isFinished) {
       setSelectedAnswers({
         ...selectedAnswers,
         [questionId]: choice,
@@ -49,18 +49,12 @@ const MultipleChoiceTest = () => {
     }, 0);
 
     setScore(calculatedScore);
-    setIsResultsVisible(true); // Show results after answering
-    setIsModalVisible(true); // Show modal
-  };
-
-  const handleSeeAnswers = () => {
-    alert(`Your score: ${score}/${questions.length}`);
-    setIsModalVisible(false); // Close modal after viewing answers
-    setIsFinished(true); // Mark the quiz as finished
+    setIsResultsVisible(true);
+    setIsModalVisible(true);
   };
 
   const handleConfirmQuit = () => {
-    setIsModalVisible(false); // Close modal before navigating
+    setIsModalVisible(false);
     router.push('/app2/HomePage');
   };
 
@@ -79,7 +73,7 @@ const MultipleChoiceTest = () => {
               onPress={() => handleAnswerSelect(item.id, choice)}
               style={[styles.choiceTouchable, selectedAnswers[item.id] === choice && styles.choiceTouchableActive]}
               activeOpacity={0.8}
-              disabled={isFinished} // Disable button if quiz is finished
+              disabled={isFinished}
             >
               <View style={[styles.circle, selectedAnswers[item.id] === choice && styles.selectedCircle]}>
                 {selectedAnswers[item.id] === choice && <View style={styles.innerCircle} />}
@@ -118,7 +112,7 @@ const MultipleChoiceTest = () => {
   const renderFooter = () => (
     <View style={styles.footerContainer}>
       <TouchableOpacity style={styles.doneButton} onPress={handleDonePress}>
-        <Text style={styles.doneButtonText}>Done</Text>
+        <Text style={styles.doneButtonText}>𝕯𝖔𝖓𝖊 </Text>
       </TouchableOpacity>
     </View>
   );
@@ -126,9 +120,9 @@ const MultipleChoiceTest = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>Level 1: Multiple Choice</Text>
+        <Text style={styles.headerText}>  M𝖚𝖑𝖙𝖎𝖕𝖑𝖊 C𝖍𝖔𝖎𝖈𝖊 </Text>
         <TouchableOpacity style={styles.quitButton} onPress={handleConfirmQuit}>
-          <FontAwesome name="sign-out" size={24} color="#FFFFFF" />
+          <FontAwesome name="sign-out" size={20} color="#FF0000" />
         </TouchableOpacity>
       </View>
 
@@ -151,11 +145,8 @@ const MultipleChoiceTest = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Exam Finished!</Text>
             <Text style={styles.modalMessage}>Your score: {score}/{questions.length}</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={handleSeeAnswers}>
-              <Text style={styles.modalButtonText}>See Answers</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.modalButton} onPress={handleConfirmQuit}>
-              <Text style={styles.modalButtonText}>Go Back to Home Page</Text>
+              <Text style={styles.modalButtonText}>Go to Home Page</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -168,16 +159,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#EAEDEE',
+    backgroundColor: '#d8ffb1',
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#3D6DA1',
+    backgroundColor: '#a8d38d',
     paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 16,
+    top: 40,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
@@ -186,28 +178,31 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    fontStyle: 'italic',
+    color: '#fee135',
+    fontSize: 27,
     textAlign: 'center',
-    flex: 1,
+    textShadowColor: '#fff',
+    textShadowOffset: { width: 2, height: 1 },
+    textShadowRadius: 4,
+    textShadowColor: '#2b2713',
+    shadowOffset: { width: 10, height: 8 }
   },
   quitButton: {
-    padding: 10,
+    padding: 5,
   },
   listContainer: {
     paddingBottom: 100,
+    top: 40,
   },
   questionContainer: {
     marginBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    backgroundColor: '#F5f5d1',
+    borderRadius: 5,
     padding: 20,
-    elevation: 3,
+    elevation: 2,
   },
   questionText: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: 'bold',
     marginBottom: 10,
   },
@@ -219,14 +214,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     borderRadius: 10,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#ffffe0',
   },
   choiceTouchableActive: {
-    backgroundColor: '#C1E1C1',
+    backgroundColor: '#a8d38d',
   },
   circle: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#CCCCCC',
@@ -238,10 +233,10 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#3D6DA1',
+    backgroundColor: '#74b72e',
   },
   selectedCircle: {
-    borderColor: '#3D6DA1',
+    borderColor: '#fee135',
   },
   choiceText: {
     fontSize: 16,
@@ -266,14 +261,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   doneButton: {
-    backgroundColor: '#3D6DA1',
+    backgroundColor: '#93dc5c',
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 10,
   },
   doneButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    textShadowColor: '#000',
+    textShadowOffset: { width: 3, height: 1 },
+    textShadowRadius: 2,
+    textShadowColor: '2b2713',
+    shadowOffset: { width: 9, height: 8 },
   },
   modalContainer: {
     flex: 1,

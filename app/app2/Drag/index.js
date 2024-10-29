@@ -1,36 +1,39 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Modal, Platform, StatusBar } from 'react-native';
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useFonts, Poppins_600SemiBold, Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular } from '@expo-google-fonts/poppins';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
-const DraggableLetter = ({ letter, onGestureEvent, onGestureEnd }) => {
-  const animatedX = useSharedValue(0);
-  const animatedY = useSharedValue(0);
+const DraggableLetter = ({ letter, onDrop }) => {
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: animatedX.value }, { translateY: animatedY.value }],
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value }
+    ],
   }));
 
+  const onGestureEvent = (event) => {
+    translateX.value = event.nativeEvent.translationX;
+    translateY.value = event.nativeEvent.translationY;
+  };
+
+  const onGestureEnd = (event) => {
+    onDrop(event.nativeEvent, letter);
+    translateX.value = withSpring(0);
+    translateY.value = withSpring(0);
+  };
+
   return (
-    <PanGestureHandler
-      onGestureEvent={(event) => {
-        animatedX.value = event.nativeEvent.translationX;
-        animatedY.value = event.nativeEvent.translationY;
-        onGestureEvent(event.nativeEvent, letter.id);
-      }}
-      onEnded={(event) => {
-        onGestureEnd(event.nativeEvent, letter.id);
-        animatedX.value = withSpring(0);
-        animatedY.value = withSpring(0);
-      }}
-    >
+    <PanGestureHandler onGestureEvent={onGestureEvent} onEnded={onGestureEnd}>
       <Animated.View style={[styles.letter, animatedStyle]}>
         <Text style={styles.letterText}>{letter.char}</Text>
       </Animated.View>
@@ -43,9 +46,7 @@ const LetterDragDropPuzzle = () => {
   const [letters, setLetters] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [score, setScore] = useState(0);
-  const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
   const router = useRouter();
-  const scrollViewRef = useRef(null);
 
   const questions = [
     { text: 'Form a word related to "Narration"', answer: 'RECOUNT' },
@@ -79,141 +80,122 @@ const LetterDragDropPuzzle = () => {
     setAnswers(answersObj);
   };
 
-  const resetQuestion = (questionText) => {
-    const question = questions.find((q) => q.text === questionText);
-    const newLetters = question.answer.split('').map((char, i) => ({
-      id: `${questionText}-${i}`,
-      char,
-    }));
-    setLetters((prevLetters) => ({
-      ...prevLetters,
-      [questionText]: [...newLetters].sort(() => Math.random() - 0.5),
-    }));
-    setAnswers((prevAnswers) => ({
-      ...prevAnswers,
-      [questionText]: Array(question.answer.length).fill(null),
-    }));
-  };
-
-  const handleGestureEvent = (event, id, questionText) => {
-    // This function can be left empty as we're handling the animation in the DraggableLetter component
-  };
-
-  const handleGestureEnd = (event, id, questionText) => {
-    const targetBoxIndex = answers[questionText].findIndex((box) => box === null);
-    const droppedLetter = letters[questionText].find((letter) => letter.id === id);
-
-    if (targetBoxIndex !== -1 && droppedLetter) {
-      const boxPosition = targetBoxIndex * 50; // Assuming each box is 50 units wide
-      const dropPosition = event.absoluteX;
-
-      if (Math.abs(dropPosition - boxPosition) < 50) { // If dropped within 50 units of the box center
-        setLetters((prevLetters) => ({
-          ...prevLetters,
-          [questionText]: prevLetters[questionText].filter((letter) => letter.id !== id),
-        }));
-        setAnswers((prevAnswers) => {
-          const newAnswer = [...prevAnswers[questionText]];
-          newAnswer[targetBoxIndex] = droppedLetter.char;
-          return { ...prevAnswers, [questionText]: newAnswer };
-        });
-      }
+  const handleDrop = (event, letter, questionText) => {
+    const targetBoxIndex = answers[questionText].findIndex(box => box === null);
+    
+    if (targetBoxIndex !== -1) {
+      setLetters(prev => ({
+        ...prev,
+        [questionText]: prev[questionText].filter(l => l.id !== letter.id)
+      }));
+      
+      setAnswers(prev => {
+        const newAnswers = { ...prev };
+        newAnswers[questionText][targetBoxIndex] = letter.char;
+        return newAnswers;
+      });
     }
   };
 
   const handleShuffle = (questionText) => {
-    setLetters((prevLetters) => ({
-      ...prevLetters,
-      [questionText]: [...prevLetters[questionText]].sort(() => Math.random() - 0.5),
+    setLetters(prev => ({
+      ...prev,
+      [questionText]: [...prev[questionText]].sort(() => Math.random() - 0.5)
+    }));
+  };
+
+  const handleReset = (questionText) => {
+    const question = questions.find(q => q.text === questionText);
+    const newLetters = question.answer.split('').map((char, i) => ({
+      id: `${questionText}-${i}`,
+      char,
+    }));
+    setLetters(prev => ({
+      ...prev,
+      [questionText]: [...newLetters].sort(() => Math.random() - 0.5)
+    }));
+    setAnswers(prev => ({
+      ...prev,
+      [questionText]: Array(question.answer.length).fill(null)
     }));
   };
 
   const handleDone = () => {
-    const calculatedScore = Object.keys(answers).reduce((acc, questionText) => {
-      const correctAnswer = questions.find(q => q.text === questionText).answer;
-      const userAnswer = answers[questionText].join('');
-      return acc + (userAnswer === correctAnswer ? 1 : 0);
+    const calculatedScore = questions.reduce((acc, question) => {
+      const userAnswer = answers[question.text]?.join('') || '';
+      return acc + (userAnswer === question.answer ? 1 : 0);
     }, 0);
     setScore(calculatedScore);
     setModalVisible(true);
   };
 
   const handleQuit = () => {
+    setModalVisible(false);
     router.push('app2/HomePage');
   };
-
-  const handleSeeAnswers = () => {
-    setShowCorrectAnswers(true);
-    setModalVisible(false);
-    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-  };
-
-  const renderQuestion = (question, index) => (
-    <View key={index} style={styles.questionContainer}>
-      <LinearGradient
-        colors={['#4c669f', '#3b5998', '#192f6a']}
-        style={styles.questionGradient}
-      >
-        <Text style={styles.questionNumber}>Question {index + 1}</Text>
-        <Text style={styles.questionText}>{question.text}</Text>
-      </LinearGradient>
-
-      <View style={styles.letterBank}>
-        {letters[question.text]?.map((letter) => (
-          <DraggableLetter
-            key={letter.id}
-            letter={letter}
-            onGestureEvent={(e) => handleGestureEvent(e, letter.id, question.text)}
-            onGestureEnd={(e) => handleGestureEnd(e, letter.id, question.text)}
-          />
-        ))}
-      </View>
-
-      <View style={styles.answerBoxes}>
-        {answers[question.text]?.map((char, idx) => (
-          <View key={idx} style={styles.answerBox}>
-            <Text style={styles.boxText}>{showCorrectAnswers ? question.answer[idx] : (char || '')}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.controls}>
-        <TouchableOpacity style={styles.icon} onPress={() => handleShuffle(question.text)}>
-          <Icon name="shuffle-variant" size={32} color="#3D6DA1" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.icon} onPress={() => resetQuestion(question.text)}>
-          <Icon name="refresh" size={32} color="#3D6DA1" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
 
   let [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
     Poppins_400Regular,
-    Poppins_700Bold,
   });
 
-  if (!fontsLoaded) {
-    return null;
-  }
+  if (!fontsLoaded) return null;
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContainer}>
-          <Text style={styles.header}>Level 2: Word Puzzle Challenge</Text>
-          <Text style={styles.instructions}>Drag the letters into the boxes to form the correct word.</Text>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.headerContainer}>
+            <Text style={styles.header}>Word Puzzle Challenge</Text>
+          </View>
+          
+          {questions.map((question, index) => (
+            <View key={index} style={styles.questionContainer}>
+              <LinearGradient
+                colors={['#a8d38d', '#fee135', '#a8d38d']}
+                style={styles.questionGradient}
+              >
+                <Text style={styles.questionNumber}>Question {index + 1}</Text>
+                <Text style={styles.questionText}>{question.text}</Text>
+              </LinearGradient>
 
-          {questions.map((question, index) => renderQuestion(question, index))}
+              <View style={styles.letterBank}>
+                {letters[question.text]?.map((letter) => (
+                  <DraggableLetter
+                    key={letter.id}
+                    letter={letter}
+                    onDrop={(event) => handleDrop(event, letter, question.text)}
+                  />
+                ))}
+              </View>
+
+              <View style={styles.answerBoxes}>
+                {Array(question.answer.length).fill(null).map((_, idx) => (
+                  <View key={idx} style={styles.answerBox}>
+                    <Text style={styles.boxText}>
+                      {answers[question.text]?.[idx] || ''}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.controls}>
+                <TouchableOpacity onPress={() => handleShuffle(question.text)}>
+                  <Icon name="shuffle-variant" size={30} color="#74b72e" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleReset(question.text)}>
+                  <Icon name="refresh" size={30} color="#FF0000" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.quitButton} onPress={handleQuit}>
-              <Text style={styles.quitButtonText}>Quit</Text>
+              <Text style={styles.buttonText}>Quit</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
-              <Text style={styles.doneButtonText}>Done</Text>
+              <Text style={styles.buttonText}>Done</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -222,19 +204,14 @@ const LetterDragDropPuzzle = () => {
           animationType="slide"
           transparent={true}
           visible={modalVisible}
-          onRequestClose={() => setModalVisible(!modalVisible)}
+          onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalView}>
-              <Text style={styles.modalText}>Your Score: {score}/{questions.length}</Text>
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={styles.seeAnswersButton} onPress={handleSeeAnswers}>
-                  <Text style={styles.seeAnswersText}>See Answers</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.goBackButton} onPress={handleQuit}>
-                  <Text style={styles.goBackText}>Go Back to Homepage</Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.modalText}>Score: {score}/{questions.length}</Text>
+              <TouchableOpacity style={styles.modalButton} onPress={handleQuit}>
+                <Text style={styles.modalButtonText}>Back to Home</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>
@@ -246,7 +223,7 @@ const LetterDragDropPuzzle = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#d8ffb1',
   },
   safeArea: {
     flex: 1,
@@ -256,23 +233,32 @@ const styles = StyleSheet.create({
     padding: 20,
     flexGrow: 1,
   },
-  header: {
-    fontSize: 28,
-    fontFamily: 'Poppins_700Bold',
-    color: '#2C3E50',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  instructions: {
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    color: '#34495E',
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#a8d38d',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 16,
     marginBottom: 20,
-    textAlign: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  header: {
+    fontSize: 27,
+    color: '#fee135',
+    fontFamily: 'Poppins_600SemiBold',
+    textShadowColor: '#2b2713',
+    textShadowOffset: { width: 2, height: 1 },
+    textShadowRadius: 4,
   },
   questionContainer: {
     marginBottom: 25,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5f5d1',
     borderRadius: 12,
     shadowColor: '#000',
     shadowOpacity: 0.1,
@@ -288,56 +274,55 @@ const styles = StyleSheet.create({
   questionNumber: {
     fontSize: 18,
     fontFamily: 'Poppins_600SemiBold',
-    color: '#FFFFFF',
+    color: '#354a21',
     marginBottom: 5,
   },
   questionText: {
     fontSize: 16,
     fontFamily: 'Poppins_400Regular',
-    color: '#FFFFFF',
+    color: '#354a21',
   },
   letterBank: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     padding: 15,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F5f5d1',
   },
   letter: {
-    width: 40,
-    height: 40,
+    width: 35,
+    height: 35,
     justifyContent: 'center',
     alignItems: 'center',
     margin: 5,
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#a8d38d',
     borderRadius: 8,
     elevation: 3,
   },
   letterText: {
     fontSize: 24,
     fontFamily: 'Poppins_600SemiBold',
-    color: '#FFFFFF',
+    color: '#Ffffe0',
   },
   answerBoxes: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 15,
     paddingHorizontal: 15,
-    width: '100%',
   },
   answerBox: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 32,
     borderWidth: 2,
-    borderColor: '#3498DB',
+    borderColor: '#fee135',
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 5,
+    margin: 4,
     backgroundColor: '#ECF0F1',
     borderRadius: 8,
   },
   boxText: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: 'Poppins_600SemiBold',
     color: '#2C3E50',
   },
@@ -345,11 +330,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingBottom: 15,
-  },
-  icon: {
-    padding: 10,
-    backgroundColor: '#ECF0F1',
-    borderRadius: 25,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -364,21 +344,15 @@ const styles = StyleSheet.create({
     marginRight: 10,
     elevation: 3,
   },
-  quitButtonText: {
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 16,
-  },
   doneButton: {
-    backgroundColor: '#2ECC71',
+    backgroundColor: '#93dc5c',
     padding: 15,
     borderRadius: 8,
     flex: 1,
     marginLeft: 10,
     elevation: 3,
   },
-  doneButtonText: {
+  buttonText: {
     color: '#FFFFFF',
     textAlign: 'center',
     fontFamily: 'Poppins_600SemiBold',
@@ -391,59 +365,36 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
-    margin: 20,
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 35,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
     width: '80%',
   },
   modalText: {
-    marginBottom: 15,
+    marginBottom: 20,
     textAlign: 'center',
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: 'Poppins_600SemiBold',
     color: '#2C3E50',
   },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  seeAnswersButton: {
-    backgroundColor: '#3498DB',
-    padding: 12,
-    borderRadius: 8,
-    flex: 1,
-    marginRight: 5,
-  },
-  seeAnswersText: {
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 14,
-  },
-  goBackButton: {
+  modalButton: {
     backgroundColor: '#E74C3C',
-    padding: 12,
+    padding: 15,
     borderRadius: 8,
-    flex: 1,
-    marginLeft: 5,
+    minWidth: 150,
   },
-  goBackText: {
+  modalButtonText: {
     color: '#FFFFFF',
     textAlign: 'center',
     fontFamily: 'Poppins_600SemiBold',
-    fontSize: 14,
-  },
+    fontSize: 16,
+},
 });
 
 export default LetterDragDropPuzzle;
