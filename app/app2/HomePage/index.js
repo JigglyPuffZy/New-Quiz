@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Animated, StatusBar } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Animated, StatusBar, Modal, Pressable } from 'react-native';
 import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FAB, Button } from 'react-native-paper';
+import { Button } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const levelIcons = ['brain', 'puzzle', 'lightbulb-on', 'telescope'];
 const levelColors = [
@@ -21,6 +21,8 @@ export default function Dashboard() {
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [completedLevels, setCompletedLevels] = useState([]); // Track completed levels
+  const [showModal, setShowModal] = useState(false); // State for modal visibility
   const router = useRouter();
 
   useEffect(() => {
@@ -51,6 +53,15 @@ export default function Dashboard() {
         4: '/app2/Identification',
       };
       router.push(`${routes[selectedLevel]}?level=${selectedLevel}`);
+      setCompletedLevels((prev) => [...new Set([...prev, selectedLevel])]); // Mark level as completed
+    }
+  };
+
+  const handleOverallScorePress = () => {
+    if (completedLevels.length === 4) {
+      router.push('/app2/Overall');
+    } else {
+      setShowModal(true); // Show modal if not all levels are completed
     }
   };
 
@@ -110,7 +121,7 @@ export default function Dashboard() {
           <Button
             mode="contained"
             icon="trophy"
-            onPress={() => router.push('/app2/Overall')}
+            onPress={handleOverallScorePress} // Use new handler
             style={styles.overallScoreButton}
             labelStyle={styles.overallScoreButtonLabel}
           >
@@ -128,6 +139,23 @@ export default function Dashboard() {
             START QUIZ
           </Button>
         </View>
+
+        {/* Modal for incomplete levels */}
+        <Modal
+          transparent={true}
+          visible={showModal}
+          animationType="slide"
+          onRequestClose={() => setShowModal(false)}
+        >
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalText}>You should finish the test to see the overall score.</Text>
+              <Pressable style={styles.modalButton} onPress={() => setShowModal(false)}>
+                <Text style={styles.modalButtonText}>OK</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
       </LinearGradient>
     </View>
   );
@@ -186,13 +214,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between', // Keep space-between
     paddingHorizontal: 5,
-
   },
   cardWrapper: {
     width: width * 0.42, // Keep original width
     aspectRatio: 1,
     marginBottom: 20,
-    // Removed any horizontal margins to keep original layout
   },
   card: {
     flex: 1,
@@ -270,5 +296,32 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
     textShadowColor: '#fee135',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 10,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });

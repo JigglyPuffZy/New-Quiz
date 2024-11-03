@@ -13,7 +13,8 @@ const SimpleUploadOrCapture = () => {
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('');
-    const [success, setSuccess] = useState(false); 
+    const [success, setSuccess] = useState(false);
+    const [isGenerated, setIsGenerated] = useState(false); // New state for generation status
     const router = useRouter();
 
     const handleUploadDocument = async () => {
@@ -55,26 +56,41 @@ const SimpleUploadOrCapture = () => {
         setTimeout(() => {
             setLoadingMessage('Scanning successful!');
             setSuccess(true);
+            setIsGenerated(true); // Set generation complete
         }, 4000);
-
-        setTimeout(() => {
-            setModalVisible(false);
-            router.push('app2/HomePage');
-        }, 6000);
     };
 
     const handleReset = () => {
         setFileUri(null);
         setFileName(null);
+        setSuccess(false);
+        setIsGenerated(false); // Reset generation status
     };
 
     const handleBack = () => {
-        router.back(); 
+        router.back();
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}> U𝖕𝖑𝖔𝖆𝖉  o𝓇  C𝖆𝖕𝖙𝖚𝖗𝖊 </Text>
+
+            {/* Start Button */}
+            <TouchableOpacity
+                style={[
+                    styles.startButton,
+                    (!fileName && !fileUri) || !isGenerated ? styles.disabledButton : styles.successButton
+                ]}
+                onPress={() => {
+                    if (fileName || fileUri) {
+                        router.push('/app2/HomePage'); // Navigate to HomePage only when the Start Button is pressed
+                    }
+                }}
+                disabled={!fileName && !fileUri || !isGenerated}
+            >
+                <Text style={styles.buttonText}>► Start Quiz</Text>
+            </TouchableOpacity>
+
             {loading && <ActivityIndicator size="large" color="#74b72e" style={styles.loading} />}
 
             <View style={styles.previewContainer}>
@@ -93,7 +109,7 @@ const SimpleUploadOrCapture = () => {
                     <Text style={styles.infoText}>No file selected</Text>
                 )}
             </View>
-            
+
             {/* Button for Upload */}
             <View style={styles.buttonContainer}>
                 <TouchableOpacity style={styles.button} onPress={handleUploadDocument}>
@@ -103,7 +119,11 @@ const SimpleUploadOrCapture = () => {
 
             {/* Buttons for Submit and Reset */}
             <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                <TouchableOpacity
+                    style={[styles.submitButton, styles.successButton]} // Always green
+                    onPress={handleSubmit}
+                    disabled={!fileName && !fileUri}
+                >
                     <Text style={styles.buttonText}>✓ 𝚂𝔲𝔟𝔪𝔦𝔱 </Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
@@ -132,6 +152,11 @@ const SimpleUploadOrCapture = () => {
                         ) : (
                             <FontAwesome name="check-circle" size={50} color="green" />
                         )}
+                        {success && (
+                            <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                <Text style={styles.closeButtonText}>Close</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </View>
             </Modal>
@@ -158,6 +183,18 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 2, height: 1 },
         textShadowRadius: 5,
     },
+    startButton: {
+        backgroundColor: '#a8d38d',
+        paddingVertical: 10,
+        paddingHorizontal: 23,
+        borderRadius: 10,
+        marginVertical: 10,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+    },
     buttonContainer: {
         width: '100%',
         flexDirection: 'row',
@@ -181,7 +218,6 @@ const styles = StyleSheet.create({
         top: 10,
     },
     submitButton: {
-        backgroundColor: '#74b72e',
         paddingVertical: 10,
         paddingHorizontal: 28,
         borderRadius: 10,
@@ -193,6 +229,12 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
         alignSelf: 'center',
         marginHorizontal: 10,
+    },
+    successButton: {
+        backgroundColor: '#74b72e',
+    },
+    disabledButton: {
+        backgroundColor: 'gray',
     },
     resetButton: {
         backgroundColor: '#ff4d4d',
@@ -225,73 +267,72 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 3,
-        backgroundColor: '#F5f5d1',
+        backgroundColor: '#F5F5F5',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ddd',
         padding: 20,
-        borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        elevation: 4,
     },
     fileContainer: {
-        marginVertical: 10,
+        alignItems: 'center',
+        marginBottom: 10,
     },
     fileText: {
         fontSize: 18,
-        color: '#2f2f2f',
+        fontWeight: 'bold',
     },
     fileName: {
         fontSize: 16,
-        color: '#4a4a4a',
-        fontWeight: '600',
+        fontStyle: 'italic',
+        fontWeight: 'bold',
     },
     imageContainer: {
-        marginVertical: 15,
-        borderWidth: 2,
-        borderColor: '#fee135',
-        overflow: 'hidden',
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     image: {
-        width: 180,
-        height: 230,
+        width: '100%',
+        height: '100%',
+        resizeMode: 'contain',
     },
     infoText: {
         fontSize: 16,
-        color: '#999',
+        color: '#888',
     },
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        backgroundColor: '#fff',
+        width: 300,
         padding: 20,
-        borderRadius: 15,
+        backgroundColor: '#fff',
+        borderRadius: 10,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
     },
     modalText: {
-        fontSize: 20,
+        fontSize: 18,
+        fontWeight: 'bold',
         marginBottom: 20,
-        textAlign: 'center',
-        color: '#2f2f2f',
+        color: '#333',
+    },
+    closeButtonText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#74b72e',
     },
     backButton: {
-        position: 'absolute',
-        bottom: 80,
-        transform: [{ translateX: -5 }],
-        borderRadius: 18,
-        padding: 10,
-        elevation: 4,
-        backgroundColor: '#a8d38d',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
+        backgroundColor: '#e8e8e8',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginTop: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
 });
 

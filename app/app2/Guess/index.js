@@ -1,3 +1,5 @@
+// app\app2\Guess\index.js
+
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, FlatList, SafeAreaView, Modal, ScrollView, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -234,15 +236,15 @@ const GameScreen = () => {
         </View>
 
         <Modal visible={showModal} animationType="fade" transparent={true}>
-    <BlurView intensity={90} tint="dark" style={styles.modalBackground}>
-        <View style={styles.modalContainer}>
-            <Text style={styles.modalText}>Your Score: {score.toFixed(2)}%</Text>
-            <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal}>
+          <BlurView intensity={90} tint="dark" style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalText}>Your Score: {score.toFixed(2)}%</Text>
+              <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal}>
                 <Text style={styles.modalCloseButtonText}>Back to Home</Text>
-            </TouchableOpacity>
-        </View>
-    </BlurView>
-</Modal>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+        </Modal>
 
         <Modal visible={showAnswersModal} animationType="slide" transparent={true}>
           <BlurView intensity={80} tint="dark" style={styles.modalBackground}>
@@ -281,7 +283,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     letterSpacing: 1,
     transform: [{ scale: 1.1 }]
-},
+  },
   instructionText: {
     fontSize: 15,
     color: '#354a21',
@@ -309,7 +311,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4
-},
+  },
   answerLabel: {
     fontSize: 20,
     color: '#354a21',
@@ -336,7 +338,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)'
-},
+  },
   selectedQuestionBox: {
     backgroundColor: '#aef359',
     transform: [{ scale: 1.05 }],
@@ -387,7 +389,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)'
-},
+  },
   selectedLetterButton: {
     backgroundColor: '#aef359',
   },
@@ -441,7 +443,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   doneButton: {
-    backgroundColor: '#fee135',
+    backgroundColor: '#93dc5c',
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
@@ -507,7 +509,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   modalCloseButton: {
-    backgroundColor: '#e74c3c',
+    backgroundColor: '#93dc5c',
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 10,
@@ -526,4 +528,3 @@ const styles = StyleSheet.create({
 });
 
 export default GameScreen;
-

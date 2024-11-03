@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
   },
   modalButton: {
-    backgroundColor: '#E74C3C',
+    backgroundColor: '#93dc5c',
     padding: 15,
     borderRadius: 8,
     minWidth: 150,

@@ -112,7 +112,7 @@ const MultipleChoiceTest = () => {
   const renderFooter = () => (
     <View style={styles.footerContainer}>
       <TouchableOpacity style={styles.doneButton} onPress={handleDonePress}>
-        <Text style={styles.doneButtonText}>𝕯𝖔𝖓𝖊 </Text>
+        <Text style={styles.doneButtonText}>Done</Text>
       </TouchableOpacity>
     </View>
   );
@@ -120,7 +120,7 @@ const MultipleChoiceTest = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>  M𝖚𝖑𝖙𝖎𝖕𝖑𝖊 C𝖍𝖔𝖎𝖈𝖊 </Text>
+        <Text style={styles.headerText}>Multiple Choice</Text>
         <TouchableOpacity style={styles.quitButton} onPress={handleConfirmQuit}>
           <FontAwesome name="sign-out" size={20} color="#FF0000" />
         </TouchableOpacity>
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 16,
-    top: 40,
+    marginTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
@@ -179,30 +179,28 @@ const styles = StyleSheet.create({
   },
   headerText: {
     color: '#fee135',
-    fontSize: 27,
+    fontSize: 24,
+    fontWeight: 'bold',
     textAlign: 'center',
-    textShadowColor: '#fff',
+    textShadowColor: '#2b2713',
     textShadowOffset: { width: 2, height: 1 },
     textShadowRadius: 4,
-    textShadowColor: '#2b2713',
-    shadowOffset: { width: 10, height: 8 }
   },
   quitButton: {
     padding: 5,
   },
   listContainer: {
     paddingBottom: 100,
-    top: 40,
   },
   questionContainer: {
     marginBottom: 20,
     backgroundColor: '#F5f5d1',
-    borderRadius: 5,
+    borderRadius: 10,
     padding: 20,
     elevation: 2,
   },
   questionText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 10,
   },
@@ -212,9 +210,10 @@ const styles = StyleSheet.create({
   choiceTouchable: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: 12,
     borderRadius: 10,
     backgroundColor: '#ffffe0',
+    marginVertical: 5,
   },
   choiceTouchableActive: {
     backgroundColor: '#a8d38d',
@@ -268,14 +267,12 @@ const styles = StyleSheet.create({
   },
   doneButtonText: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 1,
     textShadowColor: '#000',
     textShadowOffset: { width: 3, height: 1 },
     textShadowRadius: 2,
-    textShadowColor: '2b2713',
-    shadowOffset: { width: 9, height: 8 },
   },
   modalContainer: {
     flex: 1,
@@ -300,7 +297,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalButton: {
-    backgroundColor: '#3D6DA1',
+    backgroundColor: '#93dc5c',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
