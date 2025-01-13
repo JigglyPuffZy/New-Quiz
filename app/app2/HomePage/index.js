@@ -1,20 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Animated, StatusBar, Modal, Pressable } from 'react-native';
-import * as Font from 'expo-font';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Button } from 'react-native-paper';
-import Svg, { Path } from 'react-native-svg';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+  Animated,
+  StatusBar,
+  Modal,
+  Pressable,
+} from "react-native";
+import * as Font from "expo-font";
+import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Button } from "react-native-paper";
+import Svg, { Path } from "react-native-svg";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
-const levelIcons = ['brain', 'puzzle', 'lightbulb-on', 'telescope'];
+const levelIcons = ["brain", "puzzle", "lightbulb-on", "telescope"];
 const levelColors = [
-  ['#fee135', '#9fbf64'],
-  ['#fee135', '#9fbf64'],
-  ['#9fbf64', '#fee135'],
-  ['#9fbf64', '#fee135'],
+  ["#fee135", "#9fbf64"],
+  ["#fee135", "#9fbf64"],
+  ["#9fbf64", "#fee135"],
+  ["#9fbf64", "#fee135"],
 ];
 
 export default function Dashboard() {
@@ -28,9 +39,9 @@ export default function Dashboard() {
   useEffect(() => {
     async function prepare() {
       await Font.loadAsync({
-        'DancingScript-Bold': require('../../../assets/fonts/DancingScript-Bold.ttf'),
-        'Poppins-Regular': require('../../../assets/fonts/Poppins-Regular.ttf'),
-        'Poppins-Bold': require('../../../assets/fonts/Poppins-Bold.ttf'),
+        "DancingScript-Bold": require("../../../assets/fonts/DancingScript-Bold.ttf"),
+        "Poppins-Regular": require("../../../assets/fonts/Poppins-Regular.ttf"),
+        "Poppins-Bold": require("../../../assets/fonts/Poppins-Bold.ttf"),
       });
       setFontsLoaded(true);
       Animated.timing(fadeAnim, {
@@ -47,10 +58,10 @@ export default function Dashboard() {
   const handleStartPress = () => {
     if (selectedLevel) {
       const routes = {
-        1: '/app2/MultipleChoice',
-        2: '/app2/Drag',
-        3: '../../../app2/Guess',
-        4: '/app2/Identification',
+        1: "/app2/MultipleChoice",
+        2: "/app2/Blank",
+        3: "/app2/Guess",
+        4: "/app2/Identification",
       };
       router.push(`${routes[selectedLevel]}?level=${selectedLevel}`);
       setCompletedLevels((prev) => [...new Set([...prev, selectedLevel])]); // Mark level as completed
@@ -59,7 +70,7 @@ export default function Dashboard() {
 
   const handleOverallScorePress = () => {
     if (completedLevels.length === 4) {
-      router.push('/app2/Overall');
+      router.push("/app2/Overall");
     } else {
       setShowModal(true); // Show modal if not all levels are completed
     }
@@ -69,16 +80,20 @@ export default function Dashboard() {
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-      <LinearGradient colors={['#d8ffb1', '#aef359']} style={styles.gradient}>
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="dark-content"
+      />
+      <LinearGradient colors={["#d8ffb1", "#aef359"]} style={styles.gradient}>
         <Svg height="30%" width="100%" style={styles.svgCurve}>
           <Path
             fill="#d8ffb1"
             d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,213.3C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
           />
         </Svg>
-        <ScrollView 
-          style={styles.scrollContainer} 
+        <ScrollView
+          style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContentContainer}
         >
@@ -99,15 +114,29 @@ export default function Dashboard() {
                 >
                   <LinearGradient
                     colors={levelColors[level - 1]}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 1}}
-                    style={[styles.card, selectedLevel === level && styles.selectedCard]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[
+                      styles.card,
+                      selectedLevel === level && styles.selectedCard,
+                    ]}
                   >
-                    <MaterialCommunityIcons name={levelIcons[level - 1]} size={40} color="#354a21" />
+                    <MaterialCommunityIcons
+                      name={levelIcons[level - 1]}
+                      size={40}
+                      color="#354a21"
+                    />
                     <View style={styles.cardContent}>
                       <Text style={styles.cardTitle}>𝕷𝖊𝖛𝖊𝖑 {level}</Text>
                       <Text style={styles.cardSubtitle}>
-                        {['Multiple Choice', 'Drag and Drop', 'Guess', 'Identification'][level - 1]}
+                        {
+                          [
+                            "Multiple Choice",
+                            "Fill In the blank",
+                            "Guess",
+                            "Identification",
+                          ][level - 1]
+                        }
                       </Text>
                     </View>
                   </LinearGradient>
@@ -127,7 +156,7 @@ export default function Dashboard() {
           >
             OVERALL SCORE
           </Button>
-          
+
           <Button
             mode="contained"
             icon="play"
@@ -149,8 +178,13 @@ export default function Dashboard() {
         >
           <View style={styles.modalBackground}>
             <View style={styles.modalContainer}>
-              <Text style={styles.modalText}>You should finish the test to see the overall score.</Text>
-              <Pressable style={styles.modalButton} onPress={() => setShowModal(false)}>
+              <Text style={styles.modalText}>
+                You should finish the test to see the overall score.
+              </Text>
+              <Pressable
+                style={styles.modalButton}
+                onPress={() => setShowModal(false)}
+              >
                 <Text style={styles.modalButtonText}>OK</Text>
               </Pressable>
             </View>
@@ -169,7 +203,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   svgCurve: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
   },
   scrollContainer: {
@@ -184,35 +218,35 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 30,
-    alignItems: 'center',
+    alignItems: "center",
   },
   greeting: {
     fontSize: 20,
-    color: '#354a21',
-    textShadowColor: '#fee135',
+    color: "#354a21",
+    textShadowColor: "#fee135",
     textShadowOffset: { width: 2, height: 3 },
     textShadowRadius: 4,
   },
   appName: {
     fontSize: 52,
-    fontWeight: 'bold',
-    color: '#354a21',
+    fontWeight: "bold",
+    color: "#354a21",
     textShadowOffset: { width: 3, height: 1 },
     textShadowRadius: 5,
-    textShadowColor: '#fee135',
+    textShadowColor: "#fee135",
     marginTop: 10,
   },
   subtitle: {
     fontSize: 22,
-    color: '#354a21',
-    fontFamily: 'Poppins-Regular',
+    color: "#354a21",
+    fontFamily: "Poppins-Regular",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   cardsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between', // Keep space-between
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between", // Keep space-between
     paddingHorizontal: 5,
   },
   cardWrapper: {
@@ -224,13 +258,13 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 30,
     padding: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { 
-      width: 0, 
-      height: 4 
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
     },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -238,90 +272,90 @@ const styles = StyleSheet.create({
   selectedCard: {
     transform: [{ scale: 1.05 }],
     borderWidth: 3,
-    borderColor: '#fff205',
+    borderColor: "#fff205",
   },
   cardContent: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
   },
   cardTitle: {
     fontSize: 22,
-    color: '#354a21',
-    fontFamily: 'Poppins-Bold',
+    color: "#354a21",
+    fontFamily: "Poppins-Bold",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
-    textShadowColor: '#fee135',
+    textShadowColor: "#fee135",
   },
   cardSubtitle: {
     fontSize: 12,
-    color: '#354a21',
-    fontFamily: 'Poppins-Regular',
-    textAlign: 'center',
+    color: "#354a21",
+    fontFamily: "Poppins-Regular",
+    textAlign: "center",
     marginTop: 5,
   },
   buttonWrapper: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: 'column',
+    flexDirection: "column",
     padding: 20,
     gap: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   overallScoreButton: {
-    backgroundColor: '#fee135',
+    backgroundColor: "#fee135",
     borderRadius: 30,
     elevation: 5,
     paddingVertical: 5,
   },
   overallScoreButtonLabel: {
     fontSize: 16,
-    fontFamily: 'Poppins-Bold',
-    color: '#354a21',
+    fontFamily: "Poppins-Bold",
+    color: "#354a21",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
-    textShadowColor: '#9fbf64',
+    textShadowColor: "#9fbf64",
   },
   startButton: {
-    backgroundColor: '#b9db92',
+    backgroundColor: "#b9db92",
     borderRadius: 30,
     elevation: 5,
     paddingVertical: 5,
   },
   startButtonLabel: {
     fontSize: 16,
-    fontFamily: 'Poppins-Bold',
-    color: '#354a21',
+    fontFamily: "Poppins-Bold",
+    color: "#354a21",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
-    textShadowColor: '#fee135',
+    textShadowColor: "#fee135",
   },
   modalBackground: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
-    width: '80%',
-    backgroundColor: 'white',
+    width: "80%",
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalText: {
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 20,
   },
   modalButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     padding: 10,
     borderRadius: 10,
   },
   modalButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
   },
 });
