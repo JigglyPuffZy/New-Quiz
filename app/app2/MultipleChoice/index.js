@@ -89,7 +89,6 @@ const MultipleChoiceTest = () => {
 
   const handleConfirmQuit = () => {
     setIsModalVisible(false);
-    router.push("/app2/HomePage");
   };
 
   const renderQuestion = ({ item, index }) => {
@@ -162,9 +161,11 @@ const MultipleChoiceTest = () => {
 
   const renderFooter = () => (
     <View style={styles.footerContainer}>
-      <TouchableOpacity style={styles.doneButton} onPress={handleDonePress}>
-        <Text style={styles.doneButtonText}>Done</Text>
-      </TouchableOpacity>
+      {!isResultsVisible && (
+          <TouchableOpacity style={styles.doneButton} onPress={handleDonePress}>
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -202,7 +203,7 @@ const MultipleChoiceTest = () => {
               style={styles.modalButton}
               onPress={handleConfirmQuit}
             >
-              <Text style={styles.modalButtonText}>Go to Home Page</Text>
+              <Text style={styles.modalButtonText}>Review answers</Text>
             </TouchableOpacity>
           </View>
         </View>
