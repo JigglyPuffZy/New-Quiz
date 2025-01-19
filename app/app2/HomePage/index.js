@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  View,
-  Text,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -15,11 +13,10 @@ import * as Font from "expo-font";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Button } from "react-native-paper";
 import Svg, { Path } from "react-native-svg";
-
+import {SafeAreaView} from "react-native";
 const { width } = Dimensions.get("window");
-
+import { View, Text, XStack, Button } from "tamagui";
 const levelIcons = ["brain", "puzzle", "lightbulb-on", "telescope"];
 const levelColors = [
   ["#fee135", "#9fbf64"],
@@ -27,6 +24,8 @@ const levelColors = [
   ["#9fbf64", "#fee135"],
   ["#9fbf64", "#fee135"],
 ];
+import { useQuizStore } from "../upload/index"
+import {FontAwesome, Ionicons} from "@expo/vector-icons";
 
 export default function Dashboard() {
   const [selectedLevel, setSelectedLevel] = useState(null);
@@ -35,6 +34,7 @@ export default function Dashboard() {
   const [completedLevels, setCompletedLevels] = useState([]); // Track completed levels
   const [showModal, setShowModal] = useState(false); // State for modal visibility
   const router = useRouter();
+  const { quiz, reset } = useQuizStore();
 
   useEffect(() => {
     async function prepare() {
@@ -68,6 +68,11 @@ export default function Dashboard() {
     }
   };
 
+  const handleGoBack = () => {
+    reset();
+    router.push("/app2/upload");
+  };
+
   const handleOverallScorePress = () => {
     if (completedLevels.length === 4) {
       router.push("/app2/Overall");
@@ -76,30 +81,29 @@ export default function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    if (selectedLevel) {
+      const routes = {
+        1: "/app2/MultipleChoice",
+        2: "/app2/Blank",
+        3: "/app2/Guess",
+        4: "/app2/Identification",
+      };
+      router.push(`${routes[selectedLevel]}?level=${selectedLevel}`);
+      setCompletedLevels((prev) => [...new Set([...prev, selectedLevel])]);
+    }
+  }, [selectedLevel]);
+
   if (!fontsLoaded) return null;
 
   return (
-    <View style={styles.container}>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle="dark-content"
-      />
-      <LinearGradient colors={["#d8ffb1", "#aef359"]} style={styles.gradient}>
-        <Svg height="30%" width="100%" style={styles.svgCurve}>
-          <Path
-            fill="#d8ffb1"
-            d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,213.3C1248,235,1344,213,1392,202.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
-          />
-        </Svg>
+      <View flex={1} h={'100%'} justifyContent={'center'} paddingHorizontal={'$4'}>
+        <SafeAreaView flex={1}>
         <ScrollView
-          style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContentContainer}
         >
-          <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-            <View style={styles.header}>
-              <Text style={styles.greeting}>ʏᴏᴜ ᴍᴀʏ ɴᴏᴡ ᴛᴀᴋᴇ ɪᴛ!</Text>
+          <Animated.View style={[{ opacity: fadeAnim }]}>
+            <View alignItems={'center'}>
               <Text style={styles.appName}>Q𝖚𝖎𝖟 𝕿𝖎𝖒𝖊</Text>
             </View>
 
@@ -145,30 +149,21 @@ export default function Dashboard() {
             </View>
           </Animated.View>
         </ScrollView>
-
-        <View style={styles.buttonWrapper}>
-          <Button
-            mode="contained"
-            icon="trophy"
-            onPress={handleOverallScorePress} // Use new handler
-            style={styles.overallScoreButton}
-            labelStyle={styles.overallScoreButtonLabel}
+          <View
+              position="absolute"
+              bottom="$0"
+              left="$0"
+              right="$0"
+              padding="$4"
+              paddingBottom={"$6"}
+              gap="$2"
           >
-            OVERALL SCORE
-          </Button>
+            <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5"
+                    onPress={handleGoBack}>Upload a new file</Button>
+            <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5"
+                    onPress={handleOverallScorePress}>Overall Score</Button>
 
-          <Button
-            mode="contained"
-            icon="play"
-            onPress={handleStartPress}
-            disabled={!selectedLevel}
-            style={styles.startButton}
-            labelStyle={styles.startButtonLabel}
-          >
-            START QUIZ
-          </Button>
-        </View>
-
+          </View>
         {/* Modal for incomplete levels */}
         <Modal
           transparent={true}
@@ -190,7 +185,7 @@ export default function Dashboard() {
             </View>
           </View>
         </Modal>
-      </LinearGradient>
+          </SafeAreaView>
     </View>
   );
 }
@@ -212,10 +207,7 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 120, // Added padding to account for bottom buttons
   },
-  content: {
-    padding: 20,
-    paddingTop: StatusBar.currentHeight + 40,
-  },
+
   header: {
     marginBottom: 30,
     alignItems: "center",

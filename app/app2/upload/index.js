@@ -18,7 +18,8 @@ import {useNicknameStore} from "../Nickname/index";
 import {View, Text, Image, Input, Button, XStack, YStack, Stack} from 'tamagui'
 import {ScrollView} from "react-native";
 import LottieView from "lottie-react-native";
-import { Animated } from "react-native";
+import {Animated} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const useQuizStore = create((set) => ({
     quiz: {
@@ -28,35 +29,82 @@ export const useQuizStore = create((set) => ({
         level4: [],
     },
     currentLevel: 1,
-    setQuiz: (data) => set({quiz: data}),
-    setCurrentLevel: (level) => set({currentLevel: level}),
-    reset: () =>
-        set({
-            quiz: {
-                level1: [],
-                level2: [],
-                level3: [],
-                level4: [],
-            },
-            currentLevel: 1,
-        }),
+    initialized: false,
+    setQuiz: async (data) => {
+        try {
+            await AsyncStorage.setItem('quiz_data', JSON.stringify(data));
+            set({ quiz: data });
+        } catch (error) {
+            console.warn('Failed to save quiz to storage:', error);
+            throw error;
+        }
+    },
+    setCurrentLevel: async (level) => {
+        try {
+            await AsyncStorage.setItem('current_level', String(level));
+            set({ currentLevel: level });
+        } catch (error) {
+            console.warn('Failed to save current level:', error);
+            throw error;
+        }
+    },
+    reset: async () => {
+        try {
+            await AsyncStorage.removeItem('quiz_data');
+            await AsyncStorage.removeItem('current_level');
+            set({
+                quiz: {
+                    level1: [],
+                    level2: [],
+                    level3: [],
+                    level4: [],
+                },
+                currentLevel: 1,
+            });
+        } catch (error) {
+            console.warn('Failed to reset quiz data:', error);
+            throw error;
+        }
+    },
+    loadQuizData: async () => {
+        try {
+            const savedQuiz = await AsyncStorage.getItem('quiz_data');
+            const savedLevel = await AsyncStorage.getItem('current_level');
+
+            if (savedQuiz !== null) {
+                set({ quiz: JSON.parse(savedQuiz) });
+            }
+            if (savedLevel !== null) {
+                set({ currentLevel: parseInt(savedLevel, 10) });
+            }
+            set({ initialized: true });
+        } catch (error) {
+            console.warn('Failed to load quiz data:', error);
+            set({ initialized: true });
+        }
+    }
 }));
+
+// Helper function to check if quiz has data
+export const hasQuizData = (quiz) => {
+    return Object.values(quiz).some(arr => arr.length > 0);
+};
 
 const LoadingAnimation = () => {
     return (
-            <LottieView
-                source={require('../../../assets/loading-bot.json')}
-                autoPlay
-                loop
-                style={{
-                    width: 200,
-                    height: 200,
-                }}
-            />
+        <LottieView
+            source={require('../../../assets/loading-bot.json')}
+            autoPlay
+            loop
+            style={{
+                width: 200,
+                height: 200,
+            }}
+        />
     );
 };
 
-const CustomDropzone = ({ onPress, fileName, isLoading }) => {
+const CustomDropzone = ({onPress, fileName, isLoading}) => {
     return (
         <YStack width="100%" mt={'$4'}>
             <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
@@ -75,14 +123,14 @@ const CustomDropzone = ({ onPress, fileName, isLoading }) => {
 
                     {fileName ? (
                         <View gap={"$1"} borderRadius={20} justifyContent={'center'}>
-                            <Ionicons name="document" size={140} color="#7fb0fa" />
+                            <Ionicons name="document" size={140} color="#7fb0fa"/>
                             <Text fontSize={14} color={"7fb0fa"} mt="$2" textAlign={'center'}>
                                 {fileName}
                             </Text>
                         </View>
-                    ): (
+                    ) : (
                         <>
-                            <Ionicons name="add-circle" size={48} color="#dedcdc" />
+                            <Ionicons name="add-circle" size={48} color="#dedcdc"/>
 
                             <Stack
                                 borderWidth={1}
@@ -96,7 +144,7 @@ const CustomDropzone = ({ onPress, fileName, isLoading }) => {
                                     Browse from your files
                                 </Text>
                             </Stack>
-                    </>
+                        </>
                     )}
                 </YStack>
             </TouchableOpacity>
@@ -266,58 +314,65 @@ const SimpleUploadOrCapture = () => {
         <View flex={1} h={'100%'} paddingHorizontal={'$4'}>
             <SafeAreaView>
                 <View paddingVertical={'$4'}>
-                 <View flexDirection={'row'} gap={'$2'}>
-                     <Image
-                         source={{ uri: "https://res.cloudinary.com/jerrick/image/upload/d_642250b563292b35f27461a7.png,f_jpg,q_auto,w_720/67344c866c473c001d68c113.png" }}
-                         width={60}
-                         height={60}
-                         borderRadius={100}
-                     />
-                     <View>
-                         <Text fontSize={20} fontWeight={800} color={'black'}>Hey, {nickname}</Text>
-                         <Text mt={"$1"} fontSize={16} fontWeight={600} color={'black'}>Upload your study material and I'll create a personalized quiz for you</Text>
-                     </View>
-                 </View>
+                    <View flexDirection={'row'} gap={'$2'}>
+                        <Image
+                            source={{uri: "https://res.cloudinary.com/jerrick/image/upload/d_642250b563292b35f27461a7.png,f_jpg,q_auto,w_720/67344c866c473c001d68c113.png"}}
+                            width={60}
+                            height={60}
+                            borderRadius={100}
+                        />
+                        <View>
+                            <Text fontSize={20} fontWeight={800} color={'black'}>Hey, {nickname}</Text>
+                            <Text mt={"$1"} fontSize={16} fontWeight={600} color={'black'}>Upload your study material
+                                and I'll create a personalized quiz for you</Text>
+                        </View>
+                    </View>
                     {!isGenerated ? (
                         <>
-                        <CustomDropzone
-                            onPress={handleUploadDocument}
-                            fileName={fileName}
-                            isLoading={loading}
-                        />
+                            <CustomDropzone
+                                onPress={handleUploadDocument}
+                                fileName={fileName}
+                                isLoading={loading}
+                            />
 
 
-                        <View flexDirection={'row'} justifyContent={'center'} gap={'$2'}>
+                            <View flexDirection={'row'} justifyContent={'center'} gap={'$2'}>
 
-                            <Button size="$5" mt={'$4'} width={'50%'} backgroundColor={'#27ae60'}
-                                    onPress={handleSubmit}                 disabled={!fileName && !fileUri}>Submit</Button>
-                            <Button size="$5" mt={'$4'} backgroundColor={'#db1818'} width={'50%'}
-                                    onPress={handleReset}>Reset</Button>
-                        </View>
+                                <Button size="$5" mt={'$4'} width={'50%'} backgroundColor={'#27ae60'}
+                                        onPress={handleSubmit} disabled={!fileName && !fileUri}>Submit</Button>
+                                <Button size="$5" mt={'$4'} backgroundColor={'#db1818'} width={'50%'}
+                                        onPress={handleReset}>Reset</Button>
+                            </View>
                             <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5" mt={'$2'}
                                     onPress={handleChangeNickname}>Change Nickname</Button>
 
                         </>
                     ) : (
                         <>
-                        {/* Start Button */}
-                        <TouchableOpacity
-                            style={[
-                                styles.startButton,
-                                (!fileName && !fileUri) || !isGenerated
-                                    ? styles.disabledButton
-                                    : styles.successButton,
-                            ]}
-                            onPress={() => {
-                                if (fileName || fileUri) {
-                                    router.push("/app2/HomePage");
-                                }
-                            }}
-                            disabled={(!fileName && !fileUri) || !isGenerated}
-                        >
-                            <Text style={styles.buttonText}>► Start the test</Text>
-                        </TouchableOpacity>
-                            <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5" mt={'$4'} alignSelf={"flex-start"} icon={<Ionicons name="arrow-back" size={24} color="#000"/>}
+                            <View backgroundColor={'#fff'} padding={'$2'} flexDirection={'col'} paddingBottom={'$8'} marginTop={'$6'}
+                                  justifyContent={'center'} alignItems={'center'} gap={8} borderRadius={40}>
+                                <Image
+                                    source={require('../../../assets/images/quiz-play.png')}
+                                    width={300}
+                                    height={260}
+                                />
+                                <Button
+                                    color={'#fff'}
+                                    backgroundColor={'#27ae60'}
+                                    size="$5"
+                                    mt={'$-4'}
+                                    icon={<Ionicons name="play" size={24} color="#fff"/>}
+                                    onPress={() => {
+                                        if (fileName || fileUri) {
+                                            router.push("/app2/HomePage");
+                                        }
+                                    }}
+                                >
+                                    Start Playing
+                                </Button>
+                            </View>
+                            <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5" mt={'$4'}
+                                  icon={<Ionicons name="arrow-back" size={24} color="#000"/>}
                                     onPress={() => {
                                         setIsGenerated(false);
                                         setSuccess(false);
@@ -341,7 +396,7 @@ const SimpleUploadOrCapture = () => {
                                 borderRadius="$4"
                                 alignItems="center"
                             >
-                                <LoadingAnimation />
+                                <LoadingAnimation/>
                                 <Animated.Text
                                     style={[{
                                         fontSize: 16,

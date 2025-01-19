@@ -22,13 +22,14 @@ const useQuizStore = create((set) => ({
   
   // Set current level
   setCurrentLevel: (level) => set({ currentLevel: level }),
-  
-  // Reset store
-  resetStore: () => set({
-    level1: [],
-    level2: [],
-    level3: [],
-    level4: [],
+
+  reset: () => set({
+    quiz: {
+      level1: [],
+      level2: [],
+      level3: [],
+      level4: [],
+    },
     currentLevel: 1,
   }),
 }));
