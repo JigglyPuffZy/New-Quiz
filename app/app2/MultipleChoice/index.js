@@ -39,6 +39,8 @@ const MultipleChoiceTest = () => {
 
   //quiz values:
   const quiz = useQuizStore((state) => state.quiz);
+  const completeLevel = useQuizStore((state) => state.completeLevel);
+  const setLevelScore = useQuizStore((state) => state.setLevelScore);
   const questions = quiz.level1;
   console.log("This is the questions: ", questions);
   const handleAnswerSelect = (questionId, choice) => {
@@ -63,15 +65,26 @@ const MultipleChoiceTest = () => {
     }
   };
 
-  const handleDonePress = () => {
+  const handleDonePress = async () => {
     const calculatedScore = questions.reduce(
-      (total, question, index) =>
-        total + (selectedAnswers[index] === question.answer ? 1 : 0),
-      0
+        (total, question, index) =>
+            total + (selectedAnswers[index] === question.answer ? 1 : 0),
+        0
     );
+    const level1Score = Math.round((calculatedScore / questions.length) * 10);
+    await setLevelScore(1, level1Score);
+
     setScore(calculatedScore);
     setIsResultsVisible(true);
     setIsModalVisible(true);
+    setIsFinished(true);
+
+    // Complete level 1 when done
+    try {
+      await completeLevel(1);
+    } catch (error) {
+      console.error('Error completing level:', error);
+    }
   };
 
   const handleConfirmQuit = () => {
@@ -176,7 +189,7 @@ const MultipleChoiceTest = () => {
       <Modal
         transparent={true}
         visible={isModalVisible}
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setIsModalVisible(false)}
       >
         <View style={styles.modalContainer}>

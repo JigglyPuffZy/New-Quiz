@@ -31,10 +31,10 @@ export default function Dashboard() {
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
-  const [completedLevels, setCompletedLevels] = useState([]); // Track completed levels
   const [showModal, setShowModal] = useState(false); // State for modal visibility
   const router = useRouter();
-  const { quiz, reset } = useQuizStore();
+  const { quiz, resetProgress, reset, unlockedLevels, completedLevels } = useQuizStore();
+  const [shouldNavigate, setShouldNavigate] = useState(true);
 
   useEffect(() => {
     async function prepare() {
@@ -53,7 +53,18 @@ export default function Dashboard() {
     prepare();
   }, []);
 
-  const handleCardPress = (level) => setSelectedLevel(level);
+  const handleCardPress = (level) => {
+    if (unlockedLevels.includes(level)) {
+      const routes = {
+        1: "/app2/MultipleChoice",
+        2: "/app2/Blank",
+        3: "/app2/Guess",
+        4: "/app2/Identification",
+      };
+      setSelectedLevel(level);
+      router.push(`${routes[level]}?level=${level}`);
+    }
+  };
 
   const handleStartPress = () => {
     if (selectedLevel) {
@@ -81,74 +92,88 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    if (selectedLevel) {
-      const routes = {
-        1: "/app2/MultipleChoice",
-        2: "/app2/Blank",
-        3: "/app2/Guess",
-        4: "/app2/Identification",
-      };
-      router.push(`${routes[selectedLevel]}?level=${selectedLevel}`);
-      setCompletedLevels((prev) => [...new Set([...prev, selectedLevel])]);
-    }
-  }, [selectedLevel]);
 
   if (!fontsLoaded) return null;
+
+  const handleReset = async () => {
+    try {
+      setShouldNavigate(false);
+      await resetProgress();
+      setSelectedLevel(null);
+    } catch (error) {
+      console.error('Error resetting progress:', error);
+      Alert.alert('Error', 'Failed to reset progress. Please try again.');
+    }
+  };
 
   return (
       <View flex={1} h={'100%'} justifyContent={'center'} paddingHorizontal={'$4'}>
         <SafeAreaView flex={1}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-        >
-          <Animated.View style={[{ opacity: fadeAnim }]}>
-            <View alignItems={'center'}>
-              <Text style={styles.appName}>Q𝖚𝖎𝖟 𝕿𝖎𝖒𝖊</Text>
-            </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Animated.View style={[{ opacity: fadeAnim }]}>
+              <View alignItems={'center'}>
+                <Text style={styles.appName}>Q𝖚𝖎𝖟 𝕿𝖎𝖒𝖊</Text>
+              </View>
 
-            <Text style={styles.subtitle}>Choose your challenge:</Text>
+              <Text style={styles.subtitle}>Choose your challenge:</Text>
 
-            <View style={styles.cardsContainer}>
-              {[1, 2, 3, 4].map((level) => (
-                <TouchableOpacity
-                  key={level}
-                  style={styles.cardWrapper}
-                  onPress={() => handleCardPress(level)}
-                >
-                  <LinearGradient
-                    colors={levelColors[level - 1]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[
-                      styles.card,
-                      selectedLevel === level && styles.selectedCard,
-                    ]}
-                  >
-                    <MaterialCommunityIcons
-                      name={levelIcons[level - 1]}
-                      size={40}
-                      color="#354a21"
-                    />
-                    <View style={styles.cardContent}>
-                      <Text style={styles.cardTitle}>𝕷𝖊𝖛𝖊𝖑 {level}</Text>
-                      <Text style={styles.cardSubtitle}>
-                        {
-                          [
-                            "Multiple Choice",
-                            "Fill In the blank",
-                            "Guess",
-                            "Identification",
-                          ][level - 1]
-                        }
-                      </Text>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </Animated.View>
-        </ScrollView>
+              <View style={styles.cardsContainer}>
+                {[1, 2, 3, 4].map((level) => (
+                    <TouchableOpacity
+                        key={level}
+                        style={styles.cardWrapper}
+                        onPress={() => handleCardPress(level)}
+                        disabled={!unlockedLevels.includes(level)}
+                    >
+                      {unlockedLevels.includes(level) ? (
+                          <LinearGradient
+                              colors={levelColors[level - 1]}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 1 }}
+                              style={[
+                                styles.card,
+                                selectedLevel === level && styles.selectedCard,
+                              ]}
+                          >
+                            <MaterialCommunityIcons
+                                name={levelIcons[level - 1]}
+                                size={40}
+                                color="#354a21"
+                            />
+                            <View style={styles.cardContent}>
+                              <Text style={styles.cardTitle}>
+                                𝕷𝖊𝖛𝖊𝖑 {level}
+                              </Text>
+                              <Text style={styles.cardSubtitle}>
+                                {[
+                                  "Multiple Choice",
+                                  "Fill In the blank",
+                                  "Guess",
+                                  "Identification",
+                                ][level - 1]}
+                              </Text>
+                              {completedLevels.includes(level) && (
+                                  <MaterialCommunityIcons
+                                      name="check-circle"
+                                      size={24}
+                                      color="#354a21"
+                                      style={styles.completedIcon}
+                                  />
+                              )}
+                            </View>
+                          </LinearGradient>
+                      ) : (
+                          <View style={styles.lockedCard}>
+                            <Text style={styles.lockedLevelText}>𝕷𝖊𝖛𝖊𝖑 {level}</Text>
+                            <Ionicons name="lock-closed" size={40} color="#354a21" />
+                          </View>
+                      )}
+                    </TouchableOpacity>
+                ))}
+              </View>
+            </Animated.View>
+          </ScrollView>
+
           <View
               position="absolute"
               bottom="$0"
@@ -158,35 +183,46 @@ export default function Dashboard() {
               paddingBottom={"$6"}
               gap="$2"
           >
-            <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5"
-                    onPress={handleGoBack}>Upload a new file</Button>
-            <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5"
-                    onPress={handleOverallScorePress}>Overall Score</Button>
+            <Button
+                color={'#000'}
+                backgroundColor={'#dedcdc'}
+                size="$5"
+                onPress={handleGoBack}
+            >
+              Upload a new file
+            </Button>
+            <Button
+                color={'#000'}
+                backgroundColor={'#dedcdc'}
+                size="$5"
+                onPress={handleReset}
+            >
+              Reset Progress
+            </Button>
+          </View>
 
-          </View>
-        {/* Modal for incomplete levels */}
-        <Modal
-          transparent={true}
-          visible={showModal}
-          animationType="slide"
-          onRequestClose={() => setShowModal(false)}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalText}>
-                You should finish the test to see the overall score.
-              </Text>
-              <Pressable
-                style={styles.modalButton}
-                onPress={() => setShowModal(false)}
-              >
-                <Text style={styles.modalButtonText}>OK</Text>
-              </Pressable>
+          <Modal
+              transparent={true}
+              visible={showModal}
+              animationType="slide"
+              onRequestClose={() => setShowModal(false)}
+          >
+            <View style={styles.modalBackground}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalText}>
+                  You should finish all levels to see the overall score.
+                </Text>
+                <Pressable
+                    style={styles.modalButton}
+                    onPress={() => setShowModal(false)}
+                >
+                  <Text style={styles.modalButtonText}>OK</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        </Modal>
-          </SafeAreaView>
-    </View>
+          </Modal>
+        </SafeAreaView>
+      </View>
   );
 }
 
@@ -350,4 +386,27 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
   },
+  lockedCard: {
+    flex: 1,
+    borderRadius: 30,
+    padding: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: '#2b2b2b',
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  lockedLevelText: {
+    fontSize: 22,
+    color: "#354a21",
+    fontFamily: "Poppins-Bold",
+    marginBottom: 10,
+  },
+
 });

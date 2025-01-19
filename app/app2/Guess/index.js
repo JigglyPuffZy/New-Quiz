@@ -22,6 +22,8 @@ const { width, height } = Dimensions.get("window");
 const GameScreen = () => {
   const router = useRouter();
   const quiz = useQuizStore((state) => state.quiz);
+  const completeLevel = useQuizStore((state) => state.completeLevel);
+  const setLevelScore = useQuizStore((state) => state.setLevelScore);
   const [answers] = useState(quiz.level3);
   console.log("This is the questions: ", answers);
 
@@ -121,10 +123,22 @@ const GameScreen = () => {
     return calculatedScore;
   };
 
-  const handleDone = () => {
-    const calculatedScore = calculateScore();
-    setScore(calculatedScore);
-    setShowModal(true);
+  const handleDone = async () => {
+
+    try {
+      const calculatedScore = calculateScore();
+      setScore(calculatedScore);
+      setShowModal(true);
+
+      const level3Score = Math.round((calculatedScore / 100) * 10);
+      await setLevelScore(3, level3Score);
+      // Complete level 3
+      await completeLevel(3);
+
+    } catch (error) {
+      console.error('Error in handleDone:', error);
+      setShowModal(false);
+    }
   };
 
   const handleQuit = () => {
@@ -286,7 +300,7 @@ const GameScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <Modal visible={showModal} animationType="fade" transparent={true}>
+        <Modal visible={showModal} animationType="none" transparent={true}>
           <BlurView intensity={90} tint="dark" style={styles.modalBackground}>
             <View style={styles.modalContainer}>
               <Text style={styles.modalText}>
@@ -304,7 +318,7 @@ const GameScreen = () => {
 
         <Modal
           visible={showAnswersModal}
-          animationType="slide"
+          animationType="none"
           transparent={true}
         >
           <BlurView intensity={80} tint="dark" style={styles.modalBackground}>

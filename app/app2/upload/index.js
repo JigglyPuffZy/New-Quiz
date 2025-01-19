@@ -21,7 +21,8 @@ import LottieView from "lottie-react-native";
 import {Animated} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const useQuizStore = create((set) => ({
+export const useQuizStore = create((set, get) => ({
+    // Quiz data structure
     quiz: {
         level1: [],
         level2: [],
@@ -30,6 +31,54 @@ export const useQuizStore = create((set) => ({
     },
     currentLevel: 1,
     initialized: false,
+    levelScores: {
+        level1: 0,
+        level2: 0,
+        level3: 0,
+        level4: 0
+    },
+    unlockedLevels: [1], // Initially only level 1 is unlocked
+    completedLevels: [], // Track completed levels
+    setUnlockedLevels: (levels) => set({ unlockedLevels: levels }),
+    setCompletedLevels: (levels) => set({ completedLevels: levels }),
+    resetProgress: async () => {
+        try {
+            await AsyncStorage.multiRemove([
+                'completed_levels',
+                'unlocked_levels',
+                'level_scores'
+            ]);
+            set({
+                unlockedLevels: [1],
+                completedLevels: [],
+                levelScores: {
+                    level1: 0,
+                    level2: 0,
+                    level3: 0,
+                    level4: 0
+                }
+            });
+        } catch (error) {
+            console.warn('Failed to reset progress:', error);
+            throw error;
+        }
+    },
+
+    setLevelScore: async (level, score) => {
+        try {
+            const newScores = {
+                ...get().levelScores,
+                [`level${level}`]: score
+            };
+            await AsyncStorage.setItem('level_scores', JSON.stringify(newScores));
+            set({ levelScores: newScores });
+        } catch (error) {
+            console.warn('Failed to save level score:', error);
+            throw error;
+
+        }
+    },
+    // Set quiz data
     setQuiz: async (data) => {
         try {
             await AsyncStorage.setItem('quiz_data', JSON.stringify(data));
@@ -39,6 +88,8 @@ export const useQuizStore = create((set) => ({
             throw error;
         }
     },
+
+    // Set current level
     setCurrentLevel: async (level) => {
         try {
             await AsyncStorage.setItem('current_level', String(level));
@@ -48,10 +99,47 @@ export const useQuizStore = create((set) => ({
             throw error;
         }
     },
+
+    // Complete a level and unlock the next one
+    completeLevel: async (level) => {
+        try {
+            const state = get();
+            if (state.completedLevels.includes(level)) {
+                return; // Level already completed
+            }
+            const newCompletedLevels = [...new Set([...state.completedLevels, level])];
+            const nextLevel = level + 1;
+            let newUnlockedLevels = [...state.unlockedLevels];
+
+            // Unlock next level if it exists (max level is 4)
+            if (nextLevel <= 4 && !newUnlockedLevels.includes(nextLevel)) {
+                newUnlockedLevels.push(nextLevel);
+            }
+
+            // Save to AsyncStorage
+            await AsyncStorage.setItem('completed_levels', JSON.stringify(newCompletedLevels));
+            await AsyncStorage.setItem('unlocked_levels', JSON.stringify(newUnlockedLevels));
+
+            // Update state
+            set({
+                completedLevels: newCompletedLevels,
+                unlockedLevels: newUnlockedLevels,
+            });
+        } catch (error) {
+            console.warn('Failed to complete level:', error);
+            throw error;
+        }
+    },
+
+    // Reset everything
     reset: async () => {
         try {
-            await AsyncStorage.removeItem('quiz_data');
-            await AsyncStorage.removeItem('current_level');
+            await AsyncStorage.multiRemove([
+                'quiz_data',
+                'current_level',
+                'completed_levels',
+                'unlocked_levels'
+            ]);
             set({
                 quiz: {
                     level1: [],
@@ -60,28 +148,64 @@ export const useQuizStore = create((set) => ({
                     level4: [],
                 },
                 currentLevel: 1,
+                unlockedLevels: [1],
+                completedLevels: [],
             });
         } catch (error) {
             console.warn('Failed to reset quiz data:', error);
             throw error;
         }
     },
+
+    // Load all quiz data from storage
     loadQuizData: async () => {
         try {
-            const savedQuiz = await AsyncStorage.getItem('quiz_data');
-            const savedLevel = await AsyncStorage.getItem('current_level');
+            const [
+                savedQuiz,
+                savedLevel,
+                savedCompletedLevels,
+                savedUnlockedLevels
+            ] = await Promise.all([
+                AsyncStorage.getItem('quiz_data'),
+                AsyncStorage.getItem('current_level'),
+                AsyncStorage.getItem('completed_levels'),
+                AsyncStorage.getItem('unlocked_levels')
+            ]);
+
+            const newState = {
+                initialized: true
+            };
 
             if (savedQuiz !== null) {
-                set({ quiz: JSON.parse(savedQuiz) });
+                newState.quiz = JSON.parse(savedQuiz);
             }
             if (savedLevel !== null) {
-                set({ currentLevel: parseInt(savedLevel, 10) });
+                newState.currentLevel = parseInt(savedLevel, 10);
             }
-            set({ initialized: true });
+            if (savedCompletedLevels !== null) {
+                newState.completedLevels = JSON.parse(savedCompletedLevels);
+            }
+            if (savedUnlockedLevels !== null) {
+                newState.unlockedLevels = JSON.parse(savedUnlockedLevels);
+            }
+
+            set(newState);
         } catch (error) {
             console.warn('Failed to load quiz data:', error);
             set({ initialized: true });
         }
+    },
+
+    // Helper method to check if a level is unlocked
+    isLevelUnlocked: (level) => {
+        const state = get();
+        return state.unlockedLevels.includes(level);
+    },
+
+    // Helper method to check if a level is completed
+    isLevelCompleted: (level) => {
+        const state = get();
+        return state.completedLevels.includes(level);
     }
 }));
 

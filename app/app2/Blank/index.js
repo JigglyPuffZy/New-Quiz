@@ -28,14 +28,19 @@ const LetterFillInBlankPuzzle = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [score, setScore] = useState(0);
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const quiz = useQuizStore((state) => state.quiz);
+  const completeLevel = useQuizStore((state) => state.completeLevel);
+  const setLevelScore = useQuizStore((state) => state.setLevelScore);
   const questions = quiz.level2;
   console.log("This is the questions: ", questions);
 
   useEffect(() => {
-    resetPuzzle();
-  }, []);
+    if (questions?.length > 0) {
+      resetPuzzle();
+    }
+  }, [questions]);
 
   const resetPuzzle = () => {
     const answersObj = {};
@@ -52,21 +57,45 @@ const LetterFillInBlankPuzzle = () => {
     }));
   };
 
-  const handleDone = () => {
-    const calculatedScore = questions.reduce((acc, question) => {
-      const userAnswer = (answers[question.question] || "")
-        .toLowerCase()
-        .trim();
-      const correctAnswer = (question.answer || "").toLowerCase().trim();
-      return acc + (userAnswer === correctAnswer ? 1 : 0);
-    }, 0);
-    setScore(calculatedScore);
-    setModalVisible(true);
+  const handleDone = async () => {
+    // Prevent double submission
+    if (isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // Calculate score
+      const calculatedScore = questions.reduce((acc, question) => {
+        const userAnswer = (answers[question.question] || "").toLowerCase().trim();
+        const correctAnswer = (question.answer || "").toLowerCase().trim();
+        return acc + (userAnswer === correctAnswer ? 1 : 0);
+      }, 0);
+
+      const level2Score = Math.round((calculatedScore / questions.length) * 10);
+      await setLevelScore(2, level2Score);
+
+      // Update score and show modal
+      setScore(calculatedScore);
+      setModalVisible(true);
+
+      // Complete the level
+      await completeLevel(2);
+
+    } catch (error) {
+      console.error('Error in handleDone:', error);
+      // Show error to user if needed
+      setModalVisible(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleQuit = () => {
-    setModalVisible(false);
-    router.push("app2/HomePage");
+    // Prevent navigation if already submitting
+    if (!isSubmitting) {
+      setModalVisible(false);
+      router.push("/app2/HomePage");
+    }
   };
 
   let [fontsLoaded] = useFonts({
@@ -117,7 +146,7 @@ const LetterFillInBlankPuzzle = () => {
         </View>
 
         <Modal
-          animationType="slide"
+          animationType="none"
           transparent={true}
           visible={modalVisible}
           onRequestClose={() => setModalVisible(false)}
