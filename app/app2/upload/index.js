@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useRef} from "react";
 import {create} from "zustand";
 import {
     StyleSheet,
@@ -17,6 +17,8 @@ import axios from "axios";
 import {useNicknameStore} from "../Nickname/index";
 import {View, Text, Image, Input, Button, XStack, YStack, Stack} from 'tamagui'
 import {ScrollView} from "react-native";
+import LottieView from "lottie-react-native";
+import { Animated } from "react-native";
 
 export const useQuizStore = create((set) => ({
     quiz: {
@@ -39,6 +41,20 @@ export const useQuizStore = create((set) => ({
             currentLevel: 1,
         }),
 }));
+
+const LoadingAnimation = () => {
+    return (
+            <LottieView
+                source={require('../../../assets/loading-bot.json')}
+                autoPlay
+                loop
+                style={{
+                    width: 200,
+                    height: 200,
+                }}
+            />
+    );
+};
 
 const CustomDropzone = ({ onPress, fileName, isLoading }) => {
     return (
@@ -101,9 +117,17 @@ const SimpleUploadOrCapture = () => {
     const [generatedQuestions, setGeneratedQuestions] = useState([]); // Added state for questions
     const router = useRouter();
     const nickname = useNicknameStore(state => state.nickname);
-
+    const [textOpacity, setTextOpacity] = useState(1);
+    const [currentTextIndex, setCurrentTextIndex] = useState(0);
+    const fadeAnim = useRef(new Animated.Value(1)).current;
     //zustand
     const {setQuiz} = useQuizStore();
+
+    const loadingMessages = [
+        "Reading through your documents with superhuman speed...",
+        "Analyzing every detail to craft the perfect response...",
+        "Our AI is working its magic, just a moment..."
+    ];
 
     const handleUploadDocument = async () => {
         console.log("Starting...");
@@ -203,6 +227,41 @@ const SimpleUploadOrCapture = () => {
         router.back();
     };
 
+    const handleChangeNickname = () => {
+        useNicknameStore.getState().setIsEditing(true);
+        router.push("app2/Nickname");
+    };
+
+    useEffect(() => {
+        if (modalVisible) {
+            // Text rotation
+            const rotationInterval = setInterval(() => {
+                setCurrentTextIndex((prevIndex) => (prevIndex + 1) % loadingMessages.length);
+            }, 3000);
+
+            // Pulse animation
+            const pulse = Animated.sequence([
+                Animated.timing(fadeAnim, {
+                    toValue: 0.5,
+                    duration: 1000,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: true,
+                })
+            ]);
+
+            Animated.loop(pulse).start();
+
+            return () => {
+                clearInterval(rotationInterval);
+                fadeAnim.setValue(1);
+            };
+        }
+    }, [modalVisible, fadeAnim]);
+
     return (
         <View flex={1} h={'100%'} paddingHorizontal={'$4'}>
             <SafeAreaView>
@@ -227,17 +286,6 @@ const SimpleUploadOrCapture = () => {
                             isLoading={loading}
                         />
 
-                        {/* Generated Questions Section */}
-                        {isGenerated && generatedQuestions.length > 0 && (
-                            <View style={styles.questionContainer}>
-                                <Text style={styles.questionTitle}>Generated Questions:</Text>
-                                {generatedQuestions.map((question, index) => (
-                                    <Text key={index} style={styles.questionText}>
-                                        {index + 1}. {question}
-                                    </Text>
-                                ))}
-                            </View>
-                        )}
 
                         <View flexDirection={'row'} justifyContent={'center'} gap={'$2'}>
 
@@ -247,7 +295,7 @@ const SimpleUploadOrCapture = () => {
                                     onPress={handleReset}>Reset</Button>
                         </View>
                             <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5" mt={'$2'}
-                                    onPress={() => router.push("/nickname")}>Change Nickname</Button>
+                                    onPress={handleChangeNickname}>Change Nickname</Button>
 
                         </>
                     ) : (
@@ -280,20 +328,34 @@ const SimpleUploadOrCapture = () => {
 
                     {/* Modal */}
                     <Modal animationType="slide" transparent visible={modalVisible}>
-                        <View style={styles.modalContainer}>
-                            <View style={styles.modalContent}>
-                                <Text style={styles.modalText}>{loadingMessage}</Text>
-                                {!success ? (
-                                    <ActivityIndicator size="large" color="#74b72e"/>
-                                ) : (
-                                    <FontAwesome name="check-circle" size={50} color="green"/>
-                                )}
-                                {success && (
-                                    <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                        <Text style={styles.closeButtonText}>Close</Text>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
+                        <View
+                            flex={1}
+                            justifyContent="center"
+                            alignItems="center"
+                            backgroundColor="rgba(0, 0, 0, 0.5)"
+                        >
+                            <YStack
+                                width={'90%'}
+                                padding="$6"
+                                backgroundColor="$background"
+                                borderRadius="$4"
+                                alignItems="center"
+                            >
+                                <LoadingAnimation />
+                                <Animated.Text
+                                    style={[{
+                                        fontSize: 16,
+                                        fontWeight: 'bold',
+                                        marginBottom: 20,
+                                        color: '#fff',
+                                        textAlign: 'center',
+                                        opacity: fadeAnim,
+                                        paddingHorizontal: 20
+                                    }]}
+                                >
+                                    {loadingMessages[currentTextIndex]}
+                                </Animated.Text>
+                            </YStack>
                         </View>
                     </Modal>
                 </View>

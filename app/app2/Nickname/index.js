@@ -9,15 +9,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export const useNicknameStore = create((set) => ({
     nickname: '',
     initialized: false,
+    isEditing: false, // Add this flag
     setNickname: async (name) => {
         try {
             await AsyncStorage.setItem('user_nickname', name);
             set({ nickname: name });
         } catch (error) {
             console.warn('Failed to save nickname to storage:', error);
-            throw error; // Rethrow to handle in component
+            throw error;
         }
     },
+    setIsEditing: (value) => set({ isEditing: value }), // Add this function
     loadNickname: async () => {
         try {
             const savedNickname = await AsyncStorage.getItem('user_nickname');
@@ -33,7 +35,7 @@ export const useNicknameStore = create((set) => ({
 }));
 
 const Widget = () => {
-    const { nickname, setNickname, loadNickname } = useNicknameStore();
+    const { nickname, setNickname, loadNickname, isEditing } = useNicknameStore();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
 
@@ -45,17 +47,19 @@ const Widget = () => {
     useEffect(() => {
         const initialize = async () => {
             await loadNickname();
+            setInputNickname(nickname); // Set current nickname as initial value
             setIsLoading(false);
         };
         initialize();
     }, []);
 
-    // If there's already a nickname saved, redirect to upload page
+    // Only redirect if not in editing mode
     useEffect(() => {
-        if (!isLoading && nickname) {
+        if (!isLoading && nickname && !isEditing) {
             router.replace('app2/upload');
         }
-    }, [isLoading, nickname]);
+    }, [isLoading, nickname, isEditing]);
+
 
 
     const handleSaveClick = async () => {
