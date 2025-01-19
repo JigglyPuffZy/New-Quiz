@@ -1,123 +1,102 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, SafeAreaView, Alert, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, {useState, useEffect} from 'react';
+import {TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, ScrollView} from 'react-native';
+import {useRouter} from 'expo-router';
+import {View, Text, Image, Input, Button} from 'tamagui'
+import {Ionicons} from "@expo/vector-icons";
+import { create } from "zustand";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+export const useNicknameStore = create((set) => ({
+    nickname: '',
+    initialized: false,
+    setNickname: async (name) => {
+        try {
+            await AsyncStorage.setItem('user_nickname', name);
+            set({ nickname: name });
+        } catch (error) {
+            console.warn('Failed to save nickname to storage:', error);
+            throw error; // Rethrow to handle in component
+        }
+    },
+    loadNickname: async () => {
+        try {
+            const savedNickname = await AsyncStorage.getItem('user_nickname');
+            if (savedNickname !== null) {
+                set({ nickname: savedNickname });
+            }
+            set({ initialized: true });
+        } catch (error) {
+            console.warn('Failed to load nickname:', error);
+            set({ initialized: true });
+        }
+    }
+}));
 
 const Widget = () => {
-  const [nickname, setNickname] = useState('');
-  const router = useRouter();
+    const { nickname, setNickname, loadNickname } = useNicknameStore();
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
 
-  const handleNicknameChange = (text) => {
-    setNickname(text);
-  };
+    const handleNicknameChange = (text) => {
+        setNickname(text);
+    };
 
-  const handleSaveClick = () => {
-    if (!nickname.trim()) {
-      Alert.alert('Error', 'Please enter a nickname.');
-      return;
-    }
-    console.log(`Saving nickname: ${nickname}`);
-    router.push('app2/upload');
-  };
+    // Load saved nickname when component mounts
+    useEffect(() => {
+        const initialize = async () => {
+            await loadNickname();
+            setIsLoading(false);
+        };
+        initialize();
+    }, []);
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.innerContainer}>
-          <Image
-            source={require('./../../../assets/images/Welcome.png')}
-            style={styles.image}
-          />
-          <Text style={styles.quizDescription}>
-            ɪ'ᴠᴇ ʙᴇᴇɴ ᴡᴀɴᴛɪɴɢ ᴛᴏ ᴋɴᴏᴡ ʏᴏᴜ
-          </Text>
-          <View style={styles.formContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Nickname"
-              placeholderTextColor="#808080"
-              value={nickname}
-              onChangeText={handleNicknameChange}
-            />
-            <TouchableOpacity style={styles.button} onPress={handleSaveClick}>
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
-          </View>
+    // If there's already a nickname saved, redirect to upload page
+    useEffect(() => {
+        if (!isLoading && nickname) {
+            router.replace('app2/upload');
+        }
+    }, [isLoading, nickname]);
+
+
+    const handleSaveClick = async () => {
+        if (!nickname.trim()) {
+            Alert.alert('Error', 'Please enter a nickname.');
+            return;
+        }
+
+        try {
+            await setNickname(nickname.trim());
+            console.log(`Saving nickname: ${nickname}`);
+            router.push('app2/upload');
+        } catch (error) {
+            Alert.alert('Error', 'Failed to save nickname. Please try again.');
+        }
+    };
+
+    return (
+        <View flex={1} h={'100%'} justifyContent={'center'} paddingHorizontal={'$8'}>
+            <SafeAreaView>
+                <View alignItems={'center'}>
+                    <Image
+                        source={require('./../../../assets/images/Welcome.png')}
+                        width={300}
+                        height={300}
+                    />
+                    <Text mt={"$2"} fontSize={20} fontWeight={900} color={'black'}>
+                        What should we call you?
+                    </Text>
+                    <Input color={'black'} mt={"$4"} value={nickname} onChangeText={handleNicknameChange} size={'$6'}
+                           placeholder={'e.g. Aaron James'} width={'100%'} backgroundColor={'#F5f5d1'}
+                           borderColor={'#fee135'} borderWidth={'$1'} focusStyle={{
+                        borderColor: '#fee135'
+                    }}/>
+                    <Button size="$6" mt={'$4'} width={'80%'} backgroundColor={'#27ae60'}
+                            onPress={handleSaveClick}>Confirm</Button>
+                </View>
+            </SafeAreaView>
         </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+    );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#d8ffb1',
-    justifyContent: 'center',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  innerContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 70,
-  },
-  image: {
-    width: 300,
-    height: 320,
-    marginBottom: 5,
-    resizeMode: 'contain',
-  },
-  formContainer: {
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 15,
-  },
-  input: {
-    marginTop: 5,
-    padding: 10,
-    backgroundColor: '#F5f5d1',
-    borderColor: '#fee135',
-    borderWidth: 2,
-    borderRadius: 10,
-    width: '100%',
-  },
-  quizDescription: {
-    fontFamily: '',
-    bottom: 9,
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#354a21',
-    textShadowColor: '#000',
-    textShadowOffset: { width: 1, height: 0 },
-    textShadowRadius: 5,
-    textShadowColor: '#fee135',
-  },
-  button: {
-    marginTop: 16,
-    backgroundColor: '#a8d38d',
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    width: '80%',
-    alignItems: 'center',
-    elevation: 10,
-    shadowColor: '#354a21',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 15,
-  },
-  buttonText: {
-    color: '#354a21',
-    fontSize: 22,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    textShadowColor: '#000',
-    textShadowOffset: { width: 2, height: 1 },
-    textShadowRadius: 6,
-    textShadowColor: '#fee135',
-  },
-});
 
 export default Widget;
