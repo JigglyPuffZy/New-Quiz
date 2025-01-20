@@ -314,6 +314,20 @@ const LoadingAnimation = () => {
     );
 };
 
+const UploadingFileAnimation = () => {
+    return (
+        <LottieView
+            source={require('../../../assets/document.json')}
+            autoPlay
+            loop
+            style={{
+                width: 200,
+                height: 200,
+            }}
+        />
+    );
+};
+
 const CustomDropzone = ({onPress, fileName, isLoading}) => {
     return (
         <YStack width="100%" mt={'$4'}>
@@ -333,8 +347,8 @@ const CustomDropzone = ({onPress, fileName, isLoading}) => {
 
                     {fileName ? (
                         <View gap={"$1"} borderRadius={20} justifyContent={'center'}>
-                            <Ionicons name="document" size={140} color="#7fb0fa"/>
-                            <Text fontSize={14} color={"7fb0fa"} mt="$2" textAlign={'center'}>
+                           <UploadingFileAnimation />
+                            <Text fontSize={14} color={"7fb0fa"} mt="$-4" textAlign={'center'}>
                                 {fileName}
                             </Text>
                         </View>

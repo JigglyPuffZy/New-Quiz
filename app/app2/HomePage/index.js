@@ -292,8 +292,8 @@ export default function Dashboard() {
               gap="$2"
           >
             <Button
-                color={'#000'}
-                backgroundColor={'#dedcdc'}
+                color={'#fff'}
+                backgroundColor={'$green10'}
                 size="$5"
                 onPress={handleRegenerate}
                 disabled={isRegenerating}
@@ -309,8 +309,8 @@ export default function Dashboard() {
               Upload a new file
             </Button>
             <Button
-                color={'#000'}
-                backgroundColor={'#dedcdc'}
+                color={'#fff'}
+                backgroundColor={'$red10'}
                 size="$5"
                 onPress={handleReset}
             >
