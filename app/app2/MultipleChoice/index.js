@@ -13,6 +13,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { AntDesign } from "@expo/vector-icons";
 import { useQuizStore } from "../upload";
+import {Button} from "tamagui";
 // const questions = [
 //   { id: '1', question: 'What is the capital of France?', choices: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswer: 'Paris' },
 //   { id: '2', question: 'What is 2 + 2?', choices: ['3', '4', '5', '6'], correctAnswer: '4' },
@@ -91,6 +92,10 @@ const MultipleChoiceTest = () => {
     setIsModalVisible(false);
   };
 
+  const handleQuit = () => {
+    router.push("app2/HomePage");
+  }
+
   const renderQuestion = ({ item, index }) => {
     const userAnswer = selectedAnswers[index];
     const isCorrect = userAnswer === item.answer;
@@ -135,25 +140,35 @@ const MultipleChoiceTest = () => {
           </Animated.View>
         ))}
         {isResultsVisible && (
-          <View style={styles.feedbackContainer}>
-            {userAnswer ? (
-              isCorrect ? (
-                <View style={styles.correctAnswer}>
-                  <AntDesign name="checkcircle" size={20} color="green" />
-                  <Text style={styles.feedbackText}> Correct!</Text>
-                </View>
+            <View style={styles.feedbackContainer}>
+              {userAnswer ? (
+                  isCorrect ? (
+                      <View style={styles.correctAnswer}>
+                        <AntDesign name="checkcircle" size={20} color="#2e7d32" />
+                        <Text style={[styles.feedbackText, styles.correctFeedbackText]}>
+                          Correct!
+                        </Text>
+                      </View>
+                  ) : (
+                      <View style={styles.wrongAnswer}>
+                        <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                          <AntDesign name="closecircle" size={20} color="#d32f2f" />
+                          <Text style={[styles.feedbackText, styles.incorrectFeedbackText]}>
+                            Incorrect!
+                          </Text>
+                        </View>
+                        <Text style={[styles.feedbackText, styles.correctFeedbackText]}>
+                          Correct answer: {item.answer}
+                        </Text>
+                      </View>
+                  )
               ) : (
-                <View style={styles.wrongAnswer}>
-                  <AntDesign name="closecircle" size={20} color="red" />
-                  <Text style={styles.feedbackText}>
-                    Incorrect! Correct answer: {item.answer}
-                  </Text>
-                </View>
-              )
-            ) : (
-              <Text style={styles.feedbackText}>Not answered</Text>
-            )}
-          </View>
+             <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8}}>
+               <AntDesign name="closecircle" size={20} color="#d32f2f" />
+               <Text style={styles.notAnsweredText}>Not answered</Text>
+             </View>
+              )}
+            </View>
         )}
       </View>
     );
@@ -162,9 +177,15 @@ const MultipleChoiceTest = () => {
   const renderFooter = () => (
     <View style={styles.footerContainer}>
       {!isResultsVisible && (
-          <TouchableOpacity style={styles.doneButton} onPress={handleDonePress}>
-            <Text style={styles.doneButtonText}>Done</Text>
-          </TouchableOpacity>
+        <Button
+        color={'#fff'}
+      backgroundColor={'#93dc5c'}
+      size="$5"
+      mt={'$2'}
+      onPress={handleDonePress}
+    >
+      Done
+    </Button>
       )}
     </View>
   );
@@ -173,9 +194,8 @@ const MultipleChoiceTest = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.headerText}>Multiple Choice</Text>
-        <TouchableOpacity style={styles.quitButton} onPress={handleConfirmQuit}>
-          <FontAwesome name="sign-out" size={20} color="#FF0000" />
-        </TouchableOpacity>
+        <Button color={'#000'} backgroundColor={'#dedcdc'} size="$3" mt={'$2'}
+                onPress={handleQuit}>Back to home</Button>
       </View>
 
       <FlatList
@@ -299,28 +319,49 @@ const styles = StyleSheet.create({
   },
   feedbackContainer: {
     marginTop: 10,
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#f5f5f5',
   },
   correctAnswer: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 4,
+    gap: 8,
   },
   wrongAnswer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "col",
+    padding: 4,
+    gap: 8,
   },
   feedbackText: {
-    fontSize: 14,
+    fontSize: 15,
     marginLeft: 5,
+    fontWeight: '600',
+  },
+  correctFeedbackText: {
+    color: '#2e7d32',
+  },
+  incorrectFeedbackText: {
+    color: '#d32f2f',
+  },
+  notAnsweredText: {
+    color: '#d32f2f',
+    fontSize: 15,
+    fontWeight: '600',
   },
   footerContainer: {
     marginTop: 20,
-    alignItems: "center",
+    paddingHorizontal: 20, // Add padding to match the fill in blanks
+    width: '100%', // Make container full width
   },
   doneButton: {
     backgroundColor: "#93dc5c",
     paddingVertical: 15,
     paddingHorizontal: 40,
-    borderRadius: 10,
+    borderRadius: 8,
+    textAlign: 'center',
+    width: '100%', // Make button full width
   },
   doneButtonText: {
     color: "#FFFFFF",

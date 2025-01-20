@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
 import {
-  View,
   Text,
   StyleSheet,
   Dimensions,
@@ -16,6 +15,7 @@ import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQuizStore } from "../upload";
+import {Button, View} from "tamagui";
 
 const { width, height } = Dimensions.get("window");
 
@@ -43,6 +43,7 @@ const GameScreen = () => {
   const [showModal, setShowModal] = useState(false);
   const [showAnswersModal, setShowAnswersModal] = useState(false);
   const [score, setScore] = useState(0);
+  const [isResultsVisible, setIsResultsVisible] = useState(false);
 
   const handleDrop = (dropZoneIndex) => {
     if (selectedQuestionIndex !== null) {
@@ -134,7 +135,7 @@ const GameScreen = () => {
       await setLevelScore(3, level3Score);
       // Complete level 3
       await completeLevel(3);
-
+setIsResultsVisible(true);
     } catch (error) {
       console.error('Error in handleDone:', error);
       setShowModal(false);
@@ -147,7 +148,7 @@ const GameScreen = () => {
 
   const closeModal = () => {
     setShowModal(false);
-    router.push("app2/HomePage");
+    setShowAnswersModal(true);
   };
 
   const handleSeeAnswers = () => {
@@ -164,21 +165,47 @@ const GameScreen = () => {
     return answers.map((answer, index) => {
       const userAnswer = selectedAnswers[index];
       const isCorrect = userAnswer && userAnswer.word === answer.word;
+
       return (
-        <View key={index} style={styles.answerItem}>
-          <Text style={styles.answerItemText}>Question: {answer.question}</Text>
-          <Text style={styles.answerItemText}>
-            Correct Answer: {answer.word}
-          </Text>
-          <Text
-            style={[
-              styles.answerItemText,
-              isCorrect ? styles.correctAnswer : styles.wrongAnswer,
-            ]}
-          >
-            Your Answer: {userAnswer ? userAnswer.word : "Not answered"}
-          </Text>
-        </View>
+          <View key={index} style={styles.answerItem}>
+            <Text style={styles.questionTitle}>Question {index + 1}</Text>
+            <Text style={styles.answerItemText}>{answer.question}</Text>
+
+            <View style={styles.feedbackContainer}>
+              {userAnswer ? (
+                  isCorrect ? (
+                      <View style={styles.feedbackRow}>
+                        <Ionicons name="checkmark-circle" size={20} color="#2e7d32" />
+                        <Text style={[styles.feedbackText, styles.correctFeedbackText]}>
+                          Correct!
+                        </Text>
+                      </View>
+                  ) : (
+                      <>
+                        <View style={styles.feedbackRow}>
+                          <Ionicons name="close-circle" size={20} color="#d32f2f" />
+                          <Text style={[styles.feedbackText, styles.incorrectFeedbackText]}>
+                            Incorrect!
+                          </Text>
+                        </View>
+                        <Text style={styles.correctAnswerText}>
+                          Correct answer: {answer.word}
+                        </Text>
+                        <Text style={styles.yourAnswerText}>
+                          Your answer: {userAnswer.word}
+                        </Text>
+                      </>
+                  )
+              ) : (
+                  <View style={styles.feedbackRow}>
+                    <Ionicons name="close-circle" size={20} color="#d32f2f" />
+                    <Text style={[styles.feedbackText, styles.incorrectFeedbackText]}>
+                      Not answered
+                    </Text>
+                  </View>
+              )}
+            </View>
+          </View>
       );
     });
   };
@@ -290,14 +317,29 @@ const GameScreen = () => {
           }
         />
 
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.quitButton} onPress={handleQuit}>
-            <Text style={styles.buttonText}>Quit</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
-            <Text style={styles.buttonText}>Done</Text>
-          </TouchableOpacity>
+        <View flexDirection={'row'} width={'100%'} gap={"$2"} padding={"$4"}>
+          <Button
+              flex={1}
+              color={'#fff'}
+              backgroundColor={'#e74c3c'}
+              size="$5"
+              mt={'$2'}
+              onPress={handleQuit}
+          >
+            Back to home
+          </Button>
+          {!isResultsVisible && (
+              <Button
+                  flex={1}
+                  color={'#fff'}
+                  backgroundColor={'#93dc5c'}
+                  size="$5"
+                  mt={'$2'}
+                  onPress={handleDone}
+              >
+                Done
+              </Button>
+          )}
         </View>
 
         <Modal visible={showModal} animationType="none" transparent={true}>
@@ -306,12 +348,15 @@ const GameScreen = () => {
               <Text style={styles.modalText}>
                 Your Score: {score.toFixed(2)}%
               </Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={closeModal}
+              <Button
+                  color={'#fff'}
+                  backgroundColor={'#93dc5c'}
+                  size="$5"
+                  mt={'$2'}
+                  onPress={closeModal}
               >
-                <Text style={styles.modalCloseButtonText}>Back to Home</Text>
-              </TouchableOpacity>
+                Review answers
+              </Button>
             </View>
           </BlurView>
         </Modal>
@@ -545,11 +590,71 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
   },
+  answerItem: {
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: "#F5f5d1",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  questionTitle: {
+    fontSize: 18,
+    fontFamily: "Poppins_600SemiBold",
+    color: "#354a21",
+    marginBottom: 8,
+    fontWeight: "700",
+  },
+  answerItemText: {
+    fontSize: 16,
+    color: "#354a21",
+    marginBottom: 12,
+    fontFamily: "Poppins_400Regular",
+  },
+  feedbackContainer: {
+    backgroundColor: "#f8f8f8",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  feedbackRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  feedbackText: {
+    fontSize: 16,
+    marginLeft: 8,
+    fontFamily: "Poppins_400Regular",
+    fontWeight: "600",
+  },
+  correctFeedbackText: {
+    color: "#2e7d32",
+  },
+  incorrectFeedbackText: {
+    color: "#d32f2f",
+  },
+  correctAnswerText: {
+    color: "#2e7d32",
+    fontSize: 15,
+    marginTop: 4,
+    marginLeft: 28,
+    fontFamily: "Poppins_400Regular",
+  },
+  yourAnswerText: {
+    color: "#d32f2f",
+    fontSize: 15,
+    marginTop: 4,
+    marginLeft: 28,
+    fontFamily: "Poppins_400Regular",
+  },
   answersModalContainer: {
     width: "90%",
-    height: "80%",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    padding: 25,
+    maxHeight: "80%",
+    backgroundColor: "white",
+    padding: 24,
     borderRadius: 20,
     alignItems: "center",
   },
@@ -557,44 +662,19 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 20,
   },
-  answerItem: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: "rgba(240, 240, 240, 0.8)",
-    borderRadius: 10,
-  },
-  answerItemText: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  correctAnswer: {
-    color: "#27ae60",
-  },
-  wrongAnswer: {
-    color: "#e74c3c",
-  },
-  modalButton: {
-    backgroundColor: "#fee135",
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 13,
-    marginBottom: 10,
-  },
-  modalButtonText: {
-    color: "#ffffed",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
   modalCloseButton: {
     backgroundColor: "#93dc5c",
     paddingVertical: 12,
-    paddingHorizontal: 25,
+    paddingHorizontal: 24,
     borderRadius: 10,
+    width: "100%",
+    alignItems: "center",
   },
   modalCloseButtonText: {
-    color: "#fffed",
+    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+    fontFamily: "Poppins_600SemiBold",
   },
   modalText: {
     fontSize: 24,

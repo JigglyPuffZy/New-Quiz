@@ -1,7 +1,5 @@
 import React, {useState, useEffect, useRef} from "react";
 import {
-    View,
-    Text,
     StyleSheet,
     TextInput,
     TouchableOpacity,
@@ -16,8 +14,26 @@ import {useRouter} from "expo-router";
 import {LinearGradient} from "expo-linear-gradient";
 import {Ionicons} from "@expo/vector-icons";
 import {useQuizStore} from "../upload";
+import {Button, View} from "tamagui";
+import {AntDesign} from "@expo/vector-icons";
+import LottieView from "lottie-react-native";
+import {  Text, YStack, XStack, Card } from "tamagui";
 
 const {width, height} = Dimensions.get("window");
+
+const LoadingAnimation = () => {
+    return (
+        <LottieView
+            source={require('../../../assets/trophy.json')}
+            autoPlay
+            loop
+            style={{
+                width: 180,
+                height: 180,
+            }}
+        />
+    );
+};
 
 const TypingGame = () => {
     const quiz = useQuizStore((state) => state.quiz);
@@ -39,7 +55,7 @@ const TypingGame = () => {
     const [rotateAnim] = useState(new Animated.Value(0));
     const [progress, setProgress] = useState(0);
     const flatListRef = useRef(null);
-
+    const [isResultsVisible, setIsResultsVisible] = useState(false);
     useEffect(() => {
         Animated.parallel([
             Animated.timing(fadeAnim, {
@@ -97,13 +113,37 @@ const TypingGame = () => {
             setShowModal(true);
 
             await completeLevel(4);
-
+            setIsResultsVisible(true);
         } catch (error) {
             console.error('Error in handleSubmit:', error);
             setShowModal(false);
         } finally {
         }
     };
+
+    const getFeedbackMessage = (totalScore) => {
+        if (totalScore <= 10) {
+            return { message: "Keep Practicing!", color: "$red10" };
+        } else if (totalScore <= 20) {
+            return { message: "Getting Better!", color: "$orange10" };
+        } else if (totalScore <= 30) {
+            return { message: "Great Progress!", color: "$yellow10" };
+        } else if (totalScore <= 35) {
+            return { message: "Amazing Work!", color: "$green10" };
+        } else {
+            return { message: "Perfect Score!", color: "$green10" };
+        }
+    };
+    const getLevelScoreColor = (score) => {
+        if (score >= 9) return "$green10";      // Excellent: 9-10
+        if (score >= 7) return "$yellow10";     // Good: 7-8
+        if (score >= 5) return "$orange10";     // Average: 5-6
+        return "$red10";                        // Needs Work: 0-4
+    };
+    const totalScore = levelScores.level1 + levelScores.level2 +
+        levelScores.level3 + Math.round((score / questions.length) * 10);
+
+    const feedback = getFeedbackMessage(totalScore);
 
     const handleChange = (text, index) => {
         const updatedAnswers = [...userAnswers];
@@ -126,55 +166,78 @@ const TypingGame = () => {
         router.push("app2/HomePage");
     };
 
-    const renderQuestion = ({item, index}) => (
-        <Animated.View
-            style={[
-                styles.questionContainer,
-                {
-                    transform: [
-                        {
-                            translateY: slideAnim.interpolate({
-                                inputRange: [0, height],
-                                outputRange: [0, 50 * (index + 1)],
-                            }),
-                        },
-                    ],
-                },
-            ]}
-        >
-            <Text style={styles.question}>{`${index + 1}. ${item.question}`}</Text>
-            <TextInput
-                style={styles.input}
-                value={userAnswers[index]}
-                onChangeText={(text) => handleChange(text, index)}
-                placeholder="Type your answer here"
-                placeholderTextColor="#a0a0a0"
-                returnKeyType="done"
-            />
-            {showAnswers && (
-                <View style={styles.answerContainer}>
-                    <Text style={styles.correctAnswer}>
-                        Correct: {item.correctAnswer}
-                    </Text>
-                    <Text
-                        style={[
-                            styles.userAnswer,
-                            userAnswers[index].trim().toLowerCase() ===
-                            item.correctAnswer.toLowerCase()
-                                ? styles.correctUserAnswer
-                                : styles.incorrectUserAnswer,
-                        ]}
-                    >
-                        Your Answer: {userAnswers[index]}
-                        {userAnswers[index].trim().toLowerCase() ===
-                        item.correctAnswer.toLowerCase()
-                            ? " ✅"
-                            : " ❌"}
-                    </Text>
-                </View>
-            )}
-        </Animated.View>
-    );
+    const renderQuestion = ({item, index}) => {
+        const userAnswer = userAnswers[index]?.toLowerCase().trim();
+        const correctAnswer = item.answer?.toLowerCase().trim();
+        const isCorrect = userAnswer === correctAnswer;
+        const hasAnswer = userAnswer !== undefined && userAnswer !== "";
+
+        return (
+            <Animated.View
+                style={[
+                    styles.questionContainer,
+                    {
+                        transform: [
+                            {
+                                translateY: slideAnim.interpolate({
+                                    inputRange: [0, height],
+                                    outputRange: [0, 50 * (index + 1)],
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
+                <Text style={styles.question}>{`${index + 1}. ${item.question}`}</Text>
+                <TextInput
+                    style={styles.input}
+                    value={userAnswers[index]}
+                    onChangeText={(text) => handleChange(text, index)}
+                    placeholder="Type your answer here"
+                    placeholderTextColor="#a0a0a0"
+                    returnKeyType="done"
+                    editable={!isResultsVisible}
+                />
+
+                {isResultsVisible && (
+                    <View style={styles.feedbackContainer}>
+                        {hasAnswer ? (
+                            isCorrect ? (
+                                <View style={styles.feedbackRow}>
+                                    <AntDesign name="checkcircle" size={20} color="#2e7d32"/>
+                                    <Text style={[styles.feedbackText, styles.correctFeedbackText]}>
+                                        Correct!
+                                    </Text>
+                                </View>
+                            ) : (
+                                <>
+                                    <View style={styles.feedbackRow}>
+                                        <AntDesign name="closecircle" size={20} color="#d32f2f"/>
+                                        <Text style={[styles.feedbackText, styles.incorrectFeedbackText]}>
+                                            Incorrect!
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.correctAnswerText}>
+                                        Correct answer: {item.answer}
+                                    </Text>
+                                    <Text style={styles.yourAnswerText}>
+                                        Your answer: {userAnswers[index]}
+                                    </Text>
+                                </>
+                            )
+                        ) : (
+                            <View style={styles.feedbackRow}>
+                                <AntDesign name="closecircle" size={20} color="#d32f2f"/>
+                                <Text style={[styles.feedbackText, styles.incorrectFeedbackText]}>
+                                    Not answered
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                )}
+            </Animated.View>
+        );
+    };
 
     const spin = rotateAnim.interpolate({
         inputRange: [0, 1],
@@ -212,46 +275,152 @@ const TypingGame = () => {
                     />
                 </Animated.View>
 
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-                        <Text style={styles.buttonText}>Done</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.quitButton} onPress={handleQuit}>
-                        <Text style={styles.quitButtonText}>Quit</Text>
-                    </TouchableOpacity>
+                <View flexDirection={'row'} width={'100%'} gap={"$2"} paddingHorizontal={"$4"} paddingVertical={"$2"}>
+                    <Button
+                        flex={1}
+                        color={'#fff'}
+                        backgroundColor={'#e74c3c'}
+                        size="$5"
+                        mt={'$2'}
+                        onPress={handleQuit}
+                    >
+                        Back to home
+                    </Button>
+                    {!isResultsVisible && (
+                        <Button
+                            flex={1}
+                            color={'#fff'}
+                            backgroundColor={'#93dc5c'}
+                            size="$5"
+                            mt={'$2'}
+                            onPress={handleSubmit}
+                        >
+                            Done
+                        </Button>
+                    )}
                 </View>
 
                 <Modal visible={showModal} transparent={true} animationType="none">
                     <View style={styles.modalBackground}>
-                        <View style={styles.modalContainer}>
-                            <View style={styles.modalContent}>
-                                <View style={styles.resultContainer}>
-                                    <Text style={styles.congratsText}>Excellent Work!</Text>
+                        <Card
+                            width="90%"
+                            backgroundColor="white"
+                            borderRadius="$8"
+                            paddingHorizontal="$8"
+                            paddingBottom={"$8"}
+                            elevate
+                        >
+                            <YStack alignItems="center" space="$4">
+                                <LoadingAnimation />
 
-                                    {/* Level Scores */}
-                                    <View style={styles.scoresBreakdown}>
-                                        <Text>Level 1: {levelScores.level1 || 0}/10</Text>
-                                        <Text>Level 2: {levelScores.level2 || 0}/10</Text>
-                                        <Text>Level 3: {levelScores.level3 || 0}/10</Text>
-                                        <Text>Level 4: {Math.round((score / questions.length) * 10)}/10</Text>
-                                    </View>
-
-                                    {/* Total Score */}
-                                    <Text style={styles.totalScoreText}>
-                                        Total Score: {levelScores.level1 + levelScores.level2 +
-                                        levelScores.level3 + Math.round((score / questions.length) * 10)}/40
-                                    </Text>
-                                </View>
-
-                                <TouchableOpacity
-                                    style={[styles.homeButton,  styles.disabledButton]}
-                                    onPress={handleQuit}
+                                <Text
+                                    fontSize="$5"
+                                    fontWeight="800"
+                                    textAlign="center"
+                                    color={getFeedbackMessage(levelScores.level1 + levelScores.level2 +
+                                        levelScores.level3 + Math.round((score / questions.length) * 10)).color}
+                                    marginTop="$-6"
                                 >
-                                    <Ionicons name="home-outline" size={24} color="#fff"/>
-                                    <Text style={styles.homeButtonText}>Return Home</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+                                    {getFeedbackMessage(levelScores.level1 + levelScores.level2 +
+                                        levelScores.level3 + Math.round((score / questions.length) * 10)).message}
+                                </Text>
+
+                                <Card backgroundColor="$gray2" paddingHorizontal="$5" paddingVertical="$4" width="100%" borderRadius="$4">
+                                    <YStack space="$4">
+                                        {/* Level 1 */}
+                                        <XStack justifyContent="space-between" alignItems="center">
+                                            <Text fontSize="$3" fontWeight="900" color="$gray11">Level 1</Text>
+                                            <XStack alignItems="baseline" space="$1">
+                                                <Text fontSize="$5" fontWeight="700" color={getLevelScoreColor(levelScores.level1 || 0)}>
+                                                    {levelScores.level1 || 0}
+                                                </Text>
+                                                <Text fontSize="$3" color="$gray9">/10</Text>
+                                            </XStack>
+                                        </XStack>
+
+                                        <View backgroundColor="$gray5" height={1} />
+
+                                        {/* Level 2 */}
+                                        <XStack justifyContent="space-between" alignItems="center">
+                                            <Text fontSize="$3" fontWeight="900" color="$gray11">Level 2</Text>
+                                            <XStack alignItems="baseline" space="$1">
+                                                <Text fontSize="$5" fontWeight="700" color={getLevelScoreColor(levelScores.level1 || 0)}>
+                                                    {levelScores.level2 || 0}
+                                                </Text>
+                                                <Text fontSize="$3" color="$gray9">/10</Text>
+                                            </XStack>
+                                        </XStack>
+
+                                        <View backgroundColor="$gray5" height={1} />
+
+                                        {/* Level 3 */}
+                                        <XStack justifyContent="space-between" alignItems="center">
+                                            <Text fontSize="$3" fontWeight="900" color="$gray11">Level 3</Text>
+                                            <XStack alignItems="baseline" space="$1">
+                                                <Text fontSize="$5" fontWeight="700" color={getLevelScoreColor(levelScores.level1 || 0)}>
+                                                    {levelScores.level3 || 0}
+                                                </Text>
+                                                <Text fontSize="$3" color="$gray9">/10</Text>
+                                            </XStack>
+                                        </XStack>
+
+                                        <View backgroundColor="$gray5" height={1} />
+
+                                        {/* Level 4 */}
+                                        <XStack justifyContent="space-between" alignItems="center">
+                                            <Text fontSize="$3" fontWeight="900" color="$gray11">Level 4</Text>
+                                            <XStack alignItems="baseline" space="$1">
+                                                <Text fontSize="$5" fontWeight="700" color={getLevelScoreColor(levelScores.level1 || 0)}>
+                                                    {Math.round((score / questions.length) * 10)}
+                                                </Text>
+                                                <Text fontSize="$3" color="$gray9">/10</Text>
+                                            </XStack>
+                                        </XStack>
+                                    </YStack>
+                                </Card>
+
+                                {/* Total Score */}
+                                <Card
+                                    backgroundColor="$gray12"
+                                    paddingVertical="$2"
+                                    paddingHorizontal="$4"
+                                    width="100%"
+                                    borderRadius="$4"
+                                >
+                                    <XStack justifyContent="space-between" alignItems="center">
+                                        <Text fontSize="$3" fontWeight="700" color="$gray8">
+                                            Total Score
+                                        </Text>
+                                        <XStack alignItems="baseline" space="$1">
+                                            <Text fontSize="$6" fontWeight="800" color={feedback.color}>
+                                                {levelScores.level1 + levelScores.level2 + levelScores.level3 +
+                                                    Math.round((score / questions.length) * 10)}
+                                            </Text>
+                                            <Text fontSize="$4" color="$gray8">/40</Text>
+                                        </XStack>
+                                    </XStack>
+                                </Card>
+
+                                <YStack space="$3" width="100%" marginTop="$2">
+                                    <Button
+                                        size="$5"
+                                        backgroundColor="$green9"
+                                        color="white"
+                                        onPress={() => setShowModal(false)}
+                                    >
+                                        Review answers
+                                    </Button>
+                                    <Button
+                                        size="$5"
+                                        backgroundColor="$gray12"
+                                        color="black"
+                                        onPress={handleQuit}
+                                    >
+                                        Return Home
+                                    </Button>
+                                </YStack>
+                            </YStack>
+                        </Card>
                     </View>
                 </Modal>
             </SafeAreaView>
@@ -363,6 +532,44 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
         letterSpacing: 0.3,
+    },
+    feedbackContainer: {
+        backgroundColor: "#f8f8f8",
+        padding: 12,
+        borderRadius: 8,
+        marginTop: 12,
+        marginHorizontal: 15,
+    },
+    feedbackRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 4,
+    },
+    feedbackText: {
+        fontSize: 16,
+        marginLeft: 8,
+        fontFamily: "Poppins_400Regular",
+        fontWeight: "600",
+    },
+    correctFeedbackText: {
+        color: "#2e7d32",
+    },
+    incorrectFeedbackText: {
+        color: "#d32f2f",
+    },
+    correctAnswerText: {
+        color: "#2e7d32",
+        fontSize: 15,
+        marginTop: 4,
+        marginLeft: 28,
+        fontFamily: "Poppins_400Regular",
+    },
+    yourAnswerText: {
+        color: "#d32f2f",
+        fontSize: 15,
+        marginTop: 4,
+        marginLeft: 28,
+        fontFamily: "Poppins_400Regular",
     },
     correctUserAnswer: {
         color: "#4CAF50",
