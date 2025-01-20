@@ -7,7 +7,7 @@ import {
   Animated,
   StatusBar,
   Modal,
-  Pressable,
+  Pressable, Alert,
 } from "react-native";
 import * as Font from "expo-font";
 import { useRouter } from "expo-router";
@@ -26,6 +26,21 @@ const levelColors = [
 ];
 import { useQuizStore } from "../upload/index"
 import {FontAwesome, Ionicons} from "@expo/vector-icons";
+import LottieView from "lottie-react-native";
+
+const LoadingAnimation = () => {
+  return (
+      <LottieView
+          source={require('../../../assets/loading-bot.json')}
+          autoPlay
+          loop
+          style={{
+            width: 200,
+            height: 200,
+          }}
+      />
+  );
+};
 
 export default function Dashboard() {
   const [selectedLevel, setSelectedLevel] = useState(null);
@@ -33,9 +48,12 @@ export default function Dashboard() {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [showModal, setShowModal] = useState(false); // State for modal visibility
   const router = useRouter();
-  const { quiz, resetProgress, reset, unlockedLevels, completedLevels } = useQuizStore();
+  const { quiz, resetProgress, reset, unlockedLevels, completedLevels, regenerateQuestions } = useQuizStore();
   const [shouldNavigate, setShouldNavigate] = useState(true);
-
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [regenerateAnim] = useState(new Animated.Value(1));
   useEffect(() => {
     async function prepare() {
       await Font.loadAsync({
@@ -79,6 +97,90 @@ export default function Dashboard() {
     }
   };
 
+  const handleRegenerate = async () => {
+    if (isRegenerating) {
+      console.log('Already regenerating questions, preventing duplicate request');
+      return;
+    }
+
+    console.log('Starting question regeneration process...');
+    setIsRegenerating(true);
+    setShowRegenerateModal(true); // Show the modal
+
+    try {
+      const currentState = useQuizStore.getState();
+      console.log('Current quiz store state:', {
+        hasFileData: !!currentState.fileData,
+        fileName: currentState.fileName,
+        unlockedLevels: currentState.unlockedLevels,
+        completedLevels: currentState.completedLevels
+      });
+
+      const result = await regenerateQuestions();
+
+      if (result) {
+        console.log('Questions regenerated successfully');
+        Alert.alert(
+            'Success',
+            'Questions have been regenerated successfully! You can now start playing with the new questions.',
+            [{ text: 'OK' }]
+        );
+      } else {
+        console.log('Regeneration returned false, indicating failure');
+        throw new Error('Regeneration failed with no specific error');
+      }
+    } catch (error) {
+      console.error('Error during regeneration:', error);
+      if (error.message === 'No file data available') {
+        Alert.alert(
+            'Error',
+            'Please upload a file first before regenerating questions. Go back to the upload screen to add a file.',
+            [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+            'Error',
+            'An unexpected error occurred while regenerating questions. Please try again or contact support.',
+            [{ text: 'OK' }]
+        );
+      }
+    } finally {
+      console.log('Regeneration process completed, resetting loading state');
+      setIsRegenerating(false);
+      setShowRegenerateModal(false); // Hide the modal
+    }
+  };
+
+  useEffect(() => {
+    if (showRegenerateModal) {
+      // Text rotation
+      const rotationInterval = setInterval(() => {
+        setCurrentTextIndex((prevIndex) => (prevIndex + 1) % loadingMessages.length);
+      }, 3000);
+
+      // Pulse animation
+      const pulse = Animated.sequence([
+        Animated.timing(regenerateAnim, {
+          toValue: 0.5,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(regenerateAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      ]);
+
+      Animated.loop(pulse).start();
+
+      return () => {
+        clearInterval(rotationInterval);
+        regenerateAnim.setValue(1);
+      };
+    }
+  }, [showRegenerateModal]);
+
   const handleGoBack = () => {
     reset();
     router.push("/app2/upload");
@@ -106,6 +208,12 @@ export default function Dashboard() {
     }
   };
 
+  const loadingMessages = [
+    "Regenerating questions with superhuman speed...",
+    "Analyzing your content again...",
+    "Creating fresh challenges...",
+    "Almost there, preparing your new quiz..."
+  ];
   return (
       <View flex={1} h={'100%'} justifyContent={'center'} paddingHorizontal={'$4'}>
         <SafeAreaView flex={1}>
@@ -187,6 +295,15 @@ export default function Dashboard() {
                 color={'#000'}
                 backgroundColor={'#dedcdc'}
                 size="$5"
+                onPress={handleRegenerate}
+                disabled={isRegenerating}
+            >
+              {isRegenerating ? 'Regenerating...' : 'Regenerate Questions'}
+            </Button>
+            <Button
+                color={'#000'}
+                backgroundColor={'#dedcdc'}
+                size="$5"
                 onPress={handleGoBack}
             >
               Upload a new file
@@ -218,6 +335,46 @@ export default function Dashboard() {
                 >
                   <Text style={styles.modalButtonText}>OK</Text>
                 </Pressable>
+              </View>
+            </View>
+          </Modal>
+          <Modal
+              transparent={true}
+              visible={showRegenerateModal}
+              animationType="none"
+              onRequestClose={() => setShowRegenerateModal(false)}
+          >
+            <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(0, 0, 0, 0.5)"
+                }}
+            >
+              <View
+                  style={{
+                    width: '90%',
+                    padding: 24,
+                    backgroundColor: "#1a1a1a",
+                    borderRadius: 16,
+                    alignItems: "center"
+                  }}
+              >
+                <LoadingAnimation />
+                <Animated.Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      marginBottom: 20,
+                      color: '#fff',
+                      textAlign: 'center',
+                      opacity: regenerateAnim,
+                      paddingHorizontal: 20
+                    }}
+                >
+                  {loadingMessages[currentTextIndex]}
+                </Animated.Text>
               </View>
             </View>
           </Modal>

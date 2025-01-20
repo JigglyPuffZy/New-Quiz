@@ -29,6 +29,8 @@ export const useQuizStore = create((set, get) => ({
         level3: [],
         level4: [],
     },
+    fileData: null,
+    fileName: null,
     currentLevel: 1,
     initialized: false,
     levelScores: {
@@ -41,6 +43,75 @@ export const useQuizStore = create((set, get) => ({
     completedLevels: [], // Track completed levels
     setUnlockedLevels: (levels) => set({ unlockedLevels: levels }),
     setCompletedLevels: (levels) => set({ completedLevels: levels }),
+
+    setFileData: async (base64Data, fileName) => {
+        try {
+            // Save to AsyncStorage
+            await AsyncStorage.setItem('file_data', base64Data);
+            await AsyncStorage.setItem('file_name', fileName);
+
+            // Update store state
+            set({
+                fileData: base64Data,
+                fileName: fileName
+            });
+        } catch (error) {
+            console.error('Failed to save file data:', error);
+            throw error;
+        }
+    },
+
+    regenerateQuestions: async () => {
+        try {
+            const state = get();
+            console.log("Store state when regenerating:", {
+                hasFileData: !!state.fileData,
+                fileDataLength: state.fileData?.length,
+                fileName: state.fileName,
+            });
+
+            if (!state.fileData || !state.fileName) {
+                console.error("Missing data:", {
+                    fileData: !!state.fileData,
+                    fileName: !!state.fileName
+                });
+                throw new Error('No file data available');
+            }
+
+            const uploadResponse = await axios.post(
+                "https://quizwhirl-production.up.railway.app/api/parse-pdf-text",
+                {
+                    file: state.fileData,
+                    filename: state.fileName,
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            console.log("Regenerate API response status:", uploadResponse.status);
+
+            if (uploadResponse.data) {
+                set({
+                    quiz: uploadResponse.data,
+                    completedLevels: [], // Reset progress
+                    unlockedLevels: [1]  // Reset to only first level unlocked
+                });
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Detailed regeneration error:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            throw error;
+        }
+    },
+
     resetProgress: async () => {
         try {
             await AsyncStorage.multiRemove([
@@ -138,7 +209,9 @@ export const useQuizStore = create((set, get) => ({
                 'quiz_data',
                 'current_level',
                 'completed_levels',
-                'unlocked_levels'
+                'unlocked_levels',
+                'file_data',
+                'file_name'
             ]);
             set({
                 quiz: {
@@ -150,6 +223,8 @@ export const useQuizStore = create((set, get) => ({
                 currentLevel: 1,
                 unlockedLevels: [1],
                 completedLevels: [],
+                fileData: null,
+                fileName: null,
             });
         } catch (error) {
             console.warn('Failed to reset quiz data:', error);
@@ -164,12 +239,16 @@ export const useQuizStore = create((set, get) => ({
                 savedQuiz,
                 savedLevel,
                 savedCompletedLevels,
-                savedUnlockedLevels
+                savedUnlockedLevels,
+                savedFileData,
+                savedFileName,
             ] = await Promise.all([
                 AsyncStorage.getItem('quiz_data'),
                 AsyncStorage.getItem('current_level'),
                 AsyncStorage.getItem('completed_levels'),
-                AsyncStorage.getItem('unlocked_levels')
+                AsyncStorage.getItem('unlocked_levels'),
+                AsyncStorage.getItem('file_data'),
+                AsyncStorage.getItem('file_name')
             ]);
 
             const newState = {
@@ -187,6 +266,13 @@ export const useQuizStore = create((set, get) => ({
             }
             if (savedUnlockedLevels !== null) {
                 newState.unlockedLevels = JSON.parse(savedUnlockedLevels);
+            }
+            if (savedFileData !== null) {
+                newState.fileData = savedFileData;
+                console.log('Restored file data from AsyncStorage');
+            }
+            if (savedFileName !== null) {
+                newState.fileName = savedFileName;
             }
 
             set(newState);
@@ -353,6 +439,9 @@ const SimpleUploadOrCapture = () => {
             const base64Data = await base64Promise;
             console.log("Base64 data length:", base64Data.length);
 
+            // Store the base64 data and filename in the quiz store
+            useQuizStore.getState().setFileData(base64Data, file.name);
+
             // Send the base64 data to server
             const uploadResponse = await axios.post(
                 "https://quizwhirl-production.up.railway.app/api/parse-pdf-text",
@@ -506,7 +595,7 @@ const SimpleUploadOrCapture = () => {
 
 
                     {/* Modal */}
-                    <Modal animationType="slide" transparent visible={modalVisible}>
+                    <Modal animationType="none" transparent visible={modalVisible}>
                         <View
                             flex={1}
                             justifyContent="center"
