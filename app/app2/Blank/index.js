@@ -53,6 +53,13 @@ const LetterFillInBlankPuzzle = () => {
     setAnswers(answersObj);
   };
 
+  const normalizeAnswer = (answer) => {
+    return answer
+        .toLowerCase()   // Convert to lowercase
+        .replace(/\s+/g, '')   // Remove all spaces
+        // .replace(/s$/, '');     // OPTIONAL: if you want it to ignore singular / plural answers
+  };
+
   const handleInputChange = (text, questionText) => {
     setAnswers((prev) => ({
       ...prev,
@@ -70,8 +77,8 @@ const LetterFillInBlankPuzzle = () => {
 
       // Calculate score
       const calculatedScore = questions.reduce((acc, question) => {
-        const userAnswer = (answers[question.question] || "").toLowerCase().trim();
-        const correctAnswer = (question.answer || "").toLowerCase().trim();
+        const userAnswer = normalizeAnswer(answers[question.question] || "");
+        const correctAnswer = normalizeAnswer(question.answer || "");
         return acc + (userAnswer === correctAnswer ? 1 : 0);
       }, 0);
 

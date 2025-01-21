@@ -72,7 +72,7 @@ const MultipleChoiceTest = () => {
             total + (selectedAnswers[index] === question.answer ? 1 : 0),
         0
     );
-    const level1Score = Math.round((calculatedScore / questions.length) * 10);
+    const level1Score = calculatedScore;
     await setLevelScore(1, level1Score);
 
     setScore(calculatedScore);

@@ -15,11 +15,13 @@ import {useRouter} from "expo-router";
 import {FontAwesome, Ionicons} from "@expo/vector-icons";
 import axios from "axios";
 import {useNicknameStore} from "../Nickname/index";
-import {View, Text, Image, Input, Button, XStack, YStack, Stack} from 'tamagui'
+import { View, Text, Button, YStack, XStack, Image, Stack } from 'tamagui';
 import {ScrollView} from "react-native";
 import LottieView from "lottie-react-native";
 import {Animated} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import base64 from 'react-native-base64';
 
 export const useQuizStore = create((set, get) => ({
     // Quiz data structure
@@ -41,8 +43,8 @@ export const useQuizStore = create((set, get) => ({
     },
     unlockedLevels: [1], // Initially only level 1 is unlocked
     completedLevels: [], // Track completed levels
-    setUnlockedLevels: (levels) => set({ unlockedLevels: levels }),
-    setCompletedLevels: (levels) => set({ completedLevels: levels }),
+    setUnlockedLevels: (levels) => set({unlockedLevels: levels}),
+    setCompletedLevels: (levels) => set({completedLevels: levels}),
 
     setFileData: async (base64Data, fileName) => {
         try {
@@ -142,29 +144,33 @@ export const useQuizStore = create((set, get) => ({
                 [`level${level}`]: score
             };
             await AsyncStorage.setItem('level_scores', JSON.stringify(newScores));
-            set({ levelScores: newScores });
+            set({levelScores: newScores});
         } catch (error) {
             console.warn('Failed to save level score:', error);
             throw error;
 
         }
     },
-    // Set quiz data
     setQuiz: async (data) => {
         try {
-            await AsyncStorage.setItem('quiz_data', JSON.stringify(data));
-            set({ quiz: data });
+            // Extract quizQuestions from the response
+            const quizData = data.quizQuestions;
+
+            // Store the quiz questions in AsyncStorage
+            await AsyncStorage.setItem('quiz_data', JSON.stringify(quizData));
+
+            // Update the store state with just the quiz questions
+            set({ quiz: quizData });
         } catch (error) {
             console.warn('Failed to save quiz to storage:', error);
             throw error;
         }
     },
-
     // Set current level
     setCurrentLevel: async (level) => {
         try {
             await AsyncStorage.setItem('current_level', String(level));
-            set({ currentLevel: level });
+            set({currentLevel: level});
         } catch (error) {
             console.warn('Failed to save current level:', error);
             throw error;
@@ -278,7 +284,7 @@ export const useQuizStore = create((set, get) => ({
             set(newState);
         } catch (error) {
             console.warn('Failed to load quiz data:', error);
-            set({ initialized: true });
+            set({initialized: true});
         }
     },
 
@@ -328,6 +334,205 @@ const UploadingFileAnimation = () => {
     );
 };
 
+
+const CameraScreen = ({ onClose, onScan }) => {
+    const [permission, requestPermission] = useCameraPermissions();
+    const [isCameraReady, setIsCameraReady] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [capturedImage, setCapturedImage] = useState(null);
+    const cameraRef = useRef(null);
+
+    const handleClose = () => {
+        // Reset states
+        setCapturedImage(null);
+        setIsProcessing(false);
+        // Call the onClose callback
+        onClose();
+    };
+
+    const takePicture = async () => {
+        if (!cameraRef.current || !isCameraReady) return;
+
+        try {
+            // Take picture with minimal settings first
+            const photo = await cameraRef.current.takePictureAsync({
+                base64: true,
+                quality: 0.05,
+                imageType: 'jpeg',
+                width: 640,
+                height: 480
+            });
+
+            // Store the captured image
+            setCapturedImage(photo);
+
+        } catch (error) {
+            console.error('Camera error:', error);
+            Alert.alert('Error', 'Failed to take picture. Please try again.');
+        }
+    };
+
+    const processImage = async () => {
+        if (!capturedImage) return;
+
+        setIsProcessing(true);
+        try {
+            onClose();
+            // Create a FormData object to hold the image data in base64 format
+            const formData = new FormData();
+            formData.append('image', `data:image/jpeg;base64,${capturedImage.base64}`);
+            formData.append('key', 'AIzaSyD8pxVzuQCl2l989jpmcr9E0AoY4R1Qy1s'); // Replace with your API key
+
+            // Send image to Google Vision API for OCR processing
+            const visionResponse = await fetch('https://vision.googleapis.com/v1/images:annotate?key=AIzaSyD8pxVzuQCl2l989jpmcr9E0AoY4R1Qy1s', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    requests: [
+                        {
+                            image: {
+                                content: capturedImage.base64,
+                            },
+                            features: [
+                                {
+                                    type: 'TEXT_DETECTION', // Use 'DOCUMENT_TEXT_DETECTION' for better accuracy on longer documents
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            });
+
+            const visionResult = await visionResponse.json();
+
+            if (visionResult.error) {
+                throw new Error(`Vision API Error: ${visionResult.error.message}`);
+            }
+
+            if (!visionResult.responses || visionResult.responses.length === 0 || !visionResult.responses[0].textAnnotations) {
+                throw new Error('No text detected in the image.');
+            }
+
+            // Extract text from the result
+            const extractedText = visionResult.responses[0].textAnnotations[0].description;
+
+            if (extractedText && extractedText.trim()) {
+                onScan(extractedText);
+            } else {
+                throw new Error('No readable text found');
+            }
+        } catch (error) {
+            console.error('Vision API OCR error:', error);
+            Alert.alert('Error', error.message || 'Failed to process image');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+
+    const retakePhoto = () => {
+        setCapturedImage(null);
+    };
+
+    if (!permission?.granted) {
+        return (
+            <View style={[styles.cameraContainer, { backgroundColor: 'rgba(0, 0, 0, 0.9)' }]}>
+                <View style={styles.permissionContainer}>
+                    <View style={styles.permissionContent}>
+                        <Ionicons name="camera-outline" size={64} color="#fff" style={styles.cameraIcon} />
+                        <Text style={styles.permissionTitle}>Camera Permission Required</Text>
+                        <Text style={styles.permissionMessage}>
+                            Camera access is needed to scan your documents
+                        </Text>
+                        <View style={styles.permissionButtons}>
+                            <TouchableOpacity
+                                style={[styles.permissionButton, styles.allowButton]}
+                                onPress={requestPermission}
+                            >
+                                <Text style={styles.buttonText}>Allow Camera Access</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.permissionButton, styles.cancelButton]}
+                                onPress={handleClose}
+                            >
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </View>
+        );
+    }
+
+    if (capturedImage) {
+        return (
+            <View style={styles.previewContainer}>
+                <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={handleClose}
+                >
+                    <Ionicons name="close" size={30} color="white" />
+                </TouchableOpacity>
+                <Image
+                    source={{ uri: capturedImage.uri }}
+                    style={styles.previewImage}
+                />
+                <View style={styles.previewButtons}>
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={retakePhoto}
+                        disabled={isProcessing}
+                    >
+                        <Text style={styles.buttonText}>Retake</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.button, styles.useButton]}
+                        onPress={processImage}
+                        disabled={isProcessing}
+                    >
+                        {isProcessing ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <Text style={styles.buttonText}>Use Photo</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.cameraContainer}>
+            <TouchableOpacity
+                style={[styles.closeButton, { position: 'absolute', top: 40, right: 20, zIndex: 999 }]}
+                onPress={handleClose}
+            >
+                <Ionicons name="close" size={30} color="white" />
+            </TouchableOpacity>
+            <CameraView
+                ref={cameraRef}
+                style={styles.camera}
+                onCameraReady={() => setIsCameraReady(true)}
+            >
+                <View style={styles.overlay}>
+                    <View style={styles.captureContainer}>
+                        <TouchableOpacity
+                            style={styles.captureButton}
+                            onPress={takePicture}
+                        >
+                            <View style={styles.captureInner} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </CameraView>
+        </View>
+    );
+};
+
+
+
 const CustomDropzone = ({onPress, fileName, isLoading}) => {
     return (
         <YStack width="100%" mt={'$4'}>
@@ -347,7 +552,7 @@ const CustomDropzone = ({onPress, fileName, isLoading}) => {
 
                     {fileName ? (
                         <View gap={"$1"} borderRadius={20} justifyContent={'center'}>
-                           <UploadingFileAnimation />
+                            <UploadingFileAnimation/>
                             <Text fontSize={14} color={"7fb0fa"} mt="$-4" textAlign={'center'}>
                                 {fileName}
                             </Text>
@@ -392,6 +597,11 @@ const SimpleUploadOrCapture = () => {
     const [textOpacity, setTextOpacity] = useState(1);
     const [currentTextIndex, setCurrentTextIndex] = useState(0);
     const fadeAnim = useRef(new Animated.Value(1)).current;
+    const [showCamera, setShowCamera] = useState(false);
+    const [scanning, setScanning] = useState(false);
+
+
+
     //zustand
     const {setQuiz} = useQuizStore();
 
@@ -435,16 +645,18 @@ const SimpleUploadOrCapture = () => {
         try {
             const file = fileResult.assets[0];
 
-            // First get the base64 data of the file
+            // Read the file
             const response = await fetch(file.uri);
             const blob = await response.blob();
 
+            // Convert to base64 properly
             const base64Promise = new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => {
-                    // Remove the data:application/pdf;base64, part
-                    const base64 = reader.result.split(",")[1];
-                    resolve(base64);
+                    const base64Data = reader.result;
+                    // Extract only the base64 part after the data URL prefix
+                    const base64String = base64Data.split('base64,')[1];
+                    resolve(base64String);
                 };
                 reader.onerror = reject;
                 reader.readAsDataURL(blob);
@@ -452,41 +664,48 @@ const SimpleUploadOrCapture = () => {
 
             const base64Data = await base64Promise;
             console.log("Base64 data length:", base64Data.length);
+            console.log("First 100 chars of base64:", base64Data.substring(0, 100));
 
-            // Store the base64 data and filename in the quiz store
-            useQuizStore.getState().setFileData(base64Data, file.name);
+            // Store the base64 data
+            await useQuizStore.getState().setFileData(base64Data, file.name);
 
-            // Send the base64 data to server
+            // Send to backend
             const uploadResponse = await axios.post(
-                "https://quizwhirl-production.up.railway.app/api/parse-pdf-text",
+                "http://localhost:3000/api/parse-pdf-text",
                 {
                     file: base64Data,
-                    filename: file.name,
+                    filename: file.name
                 },
                 {
                     headers: {
-                        "Content-Type": "application/json",
-                    },
+                        "Content-Type": "application/json"
+                    }
                 }
             );
 
-            console.log("Server response:", uploadResponse.data);
+            console.log("Server response status:", uploadResponse.status);
+            console.log("Response data:", uploadResponse.data);
 
             if (uploadResponse.data.error) {
                 throw new Error(uploadResponse.data.error);
             }
 
-            setQuiz(uploadResponse.data);
+            await setQuiz(uploadResponse.data);
             setLoadingMessage("Text extracted successfully!");
             setSuccess(true);
             setIsGenerated(true);
+            setModalVisible(false);
         } catch (error) {
-            console.error("Processing Error:", error);
-            Alert.alert("Error", "Failed to extract text from PDF");
-        } finally {
-            if (!success) {
-                setModalVisible(false);
-            }
+            console.error("Processing Error Details:", {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            Alert.alert(
+                "Error",
+                "Failed to process PDF. Please make sure the file is a valid PDF document."
+            );
+            setModalVisible(false);
         }
     };
 
@@ -506,6 +725,87 @@ const SimpleUploadOrCapture = () => {
         useNicknameStore.getState().setIsEditing(true);
         router.push("app2/Nickname");
     };
+
+    const handleScanText = async (recognizedText) => {
+        try {
+            // Clear any previous states
+            setSuccess(false);
+            setLoading(true);
+            setScanning(true);
+            setModalVisible(true);
+            setShowCamera(false);
+
+            console.log('Starting OCR processing...');
+console.log('This is the recognized text:', recognizedText);
+            // Create filename
+            const timestamp = new Date().getTime();
+            const scannedFileName = `scanned_text_${timestamp}.txt`;
+
+            // Convert text to base64
+            const base64Text = base64.encode(recognizedText);
+
+            // Store the base64 data
+            await useQuizStore.getState().setFileData(base64Text, scannedFileName);
+
+            // Send to backend
+            const uploadResponse = await axios.post(
+                "http://localhost:3000/api/parse-pdf-text",
+                {
+                    file: base64Text,
+                    filename: scannedFileName,
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    timeout: 30000
+                }
+            );
+
+            if (uploadResponse.data.error) {
+                throw new Error(uploadResponse.data.error);
+            }
+
+            // Update states on success
+            setQuiz(uploadResponse.data);
+            setFileName(scannedFileName);
+            setSuccess(true);
+            setIsGenerated(true);
+            setShowCamera(false);
+
+        } catch (error) {
+            console.error('OCR Processing error:', error);
+
+            // Check if the error is from Axios, backend, or something else
+            if (error.response) {
+                // Axios error with response (e.g., 4xx or 5xx status)
+                console.error('Response Error:', error.response.data);
+                console.error('Response Status:', error.response.status);
+                console.error('Response Headers:', error.response.headers);
+                Alert.alert('Error', `Backend returned an error: ${error.response.status} - ${error.response.statusText}`);
+            } else if (error.request) {
+                // Axios error with no response (e.g., network issue)
+                console.error('No response received:', error.request);
+                Alert.alert('Error', 'Network error or no response from the server.');
+            } else {
+                // General error (e.g., coding error or unexpected issue)
+                console.error('Error Details:', error.message || 'Unknown error');
+                Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+            }
+
+            // Reset all states on error
+            setSuccess(false);
+            setIsGenerated(false);
+
+        } finally {
+            // Always clean up loading states
+            setLoading(false);
+            setScanning(false);
+            setModalVisible(false);
+            setShowCamera(false);
+        }
+    };
+
 
     useEffect(() => {
         if (modalVisible) {
@@ -537,6 +837,28 @@ const SimpleUploadOrCapture = () => {
         }
     }, [modalVisible, fadeAnim]);
 
+    const testOCR = async () => {
+        // Sample text that simulates what might be captured from an image
+        const sampleText = `Chapter 1: Introduction to Computer Science
+
+    Computer Science is the study of computers and computational systems. 
+    Unlike electrical and computer engineers, computer scientists deal 
+    mostly with software and software systems.
+
+    Key Concepts:
+    1. Algorithms
+    2. Data Structures
+    3. Programming Languages
+    4. Computer Architecture
+
+    Computer science spans a range of topics from theoretical studies
+    of algorithms, computation and information to the practical issues
+    of implementing computing systems in hardware and software.`;
+
+        // Call the existing handleScanText function with our sample text
+        await handleScanText(sampleText);
+    };
+
     return (
         <View flex={1} h={'100%'} paddingHorizontal={'$4'}>
             <SafeAreaView>
@@ -548,7 +870,7 @@ const SimpleUploadOrCapture = () => {
                             height={60}
                             borderRadius={100}
                         />
-                        <View>
+                        <View flex={1}>
                             <Text fontSize={20} fontWeight={800} color={'black'}>Hey, {nickname}</Text>
                             <Text mt={"$1"} fontSize={16} fontWeight={600} color={'black'}>Upload your study material
                                 and I'll create a personalized quiz for you</Text>
@@ -573,10 +895,31 @@ const SimpleUploadOrCapture = () => {
                             <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5" mt={'$2'}
                                     onPress={handleChangeNickname}>Change Nickname</Button>
 
+                            <Button
+                                color={'#000'}
+                                backgroundColor={'#dedcdc'}
+                                size="$5"
+                                mt={'$2'}
+                                icon={<Ionicons name="camera" size={24} color="#000"/>}
+                                onPress={() => setShowCamera(true)}
+                            >
+                                Scan Image
+                            </Button>
+                            <Button
+                                color={'#000'}
+                                backgroundColor={'#dedcdc'}
+                                size="$5"
+                                mt={'$2'}
+                                icon={<Ionicons name="bug" size={24} color="#000"/>}
+                                onPress={testOCR}
+                            >
+                                Test OCR (Dev)
+                            </Button>
                         </>
                     ) : (
                         <>
-                            <View backgroundColor={'#fff'} padding={'$2'} flexDirection={'col'} paddingBottom={'$8'} marginTop={'$6'}
+                            <View backgroundColor={'#fff'} padding={'$2'} flexDirection={'col'} paddingBottom={'$8'}
+                                  marginTop={'$6'}
                                   justifyContent={'center'} alignItems={'center'} gap={8} borderRadius={40}>
                                 <Image
                                     source={require('../../../assets/images/quiz-play.png')}
@@ -599,7 +942,7 @@ const SimpleUploadOrCapture = () => {
                                 </Button>
                             </View>
                             <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5" mt={'$4'}
-                                  icon={<Ionicons name="arrow-back" size={24} color="#000"/>}
+                                    icon={<Ionicons name="arrow-back" size={24} color="#000"/>}
                                     onPress={() => {
                                         setIsGenerated(false);
                                         setSuccess(false);
@@ -641,9 +984,92 @@ const SimpleUploadOrCapture = () => {
                         </View>
                     </Modal>
                 </View>
+                {showCamera && (
+                    <Modal
+                        visible={showCamera}
+                        animationType="slide"
+                        presentationStyle="fullScreen"
+                    >
+                        <CameraScreen
+                            onClose={() => setShowCamera(false)}
+                            onScan={handleScanText}
+                        />
+                    </Modal>
+                )}
             </SafeAreaView>
         </View>
     );
+};
+
+const newStyles = {
+    cameraContainer: {
+        flex: 1,
+        backgroundColor: 'black',
+    },
+    camera: {
+        flex: 1,
+    },
+    overlay: {
+        flex: 1,
+        backgroundColor: 'transparent',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: 20,
+    },
+    closeButton: {
+        alignSelf: 'flex-end',
+        padding: 10,
+    },
+    captureContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: 30,
+    },
+    captureButton: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        backgroundColor: 'white',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    captureInner: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: 'white',
+        borderWidth: 2,
+        borderColor: 'black',
+    },
+    previewContainer: {
+        flex: 1,
+        backgroundColor: 'black',
+    },
+    previewImage: {
+        flex: 1,
+        resizeMode: 'contain',
+    },
+    previewButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        padding: 20,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+    },
+    button: {
+        padding: 15,
+        borderRadius: 8,
+        backgroundColor: '#666',
+        minWidth: 120,
+        alignItems: 'center',
+    },
+    useButton: {
+        backgroundColor: '#27ae60',
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    }
 };
 
 const styles = StyleSheet.create({
@@ -683,22 +1109,6 @@ const styles = StyleSheet.create({
         justifyContent: "space-around",
         marginVertical: 10,
     },
-    button: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#a8d38d",
-        paddingVertical: 10,
-        paddingHorizontal: 23,
-        borderRadius: 10,
-        marginVertical: 5,
-        elevation: 4,
-        shadowColor: "#000",
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        top: 10,
-    },
     submitButton: {
         paddingVertical: 10,
         paddingHorizontal: 28,
@@ -732,28 +1142,8 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         marginHorizontal: 10,
     },
-    buttonText: {
-        color: "#354a21",
-        fontSize: 20,
-        fontWeight: "bold",
-        textShadowOffset: {width: 1, height: 1},
-        textShadowRadius: 2,
-        textShadowColor: "#fee135",
-    },
     loading: {
         marginVertical: 20,
-    },
-    previewContainer: {
-        width: "100%",
-        maxHeight: 20,
-        justifyContent: "center",
-        alignItems: "center",
-        marginTop: 3,
-        backgroundColor: "#F5F5F5",
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: "#ddd",
-        padding: 20,
     },
     fileContainer: {
         alignItems: "center",
@@ -837,6 +1227,98 @@ const styles = StyleSheet.create({
         color: "#555",
         marginBottom: 5,
     },
+    cameraMessage: {
+        textAlign: 'center',
+        paddingBottom: 10,
+    },
+    cameraButtonContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: 'transparent',
+        margin: 64,
+    },
+    cameraButton: {
+        flex: 1,
+        alignSelf: 'flex-end',
+        alignItems: 'center',
+    },
+    cameraText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    cameraContainer: {
+        flex: 1,
+        backgroundColor: 'black',
+    },
+    camera: {
+        flex: 1,
+    },
+    overlay: {
+        position: 'absolute',    // Position relative to the nearest positioned ancestor
+        bottom: 0,              // Aligns the element to the bottom
+        left: 0,                // Aligns the element to the left (optional)
+        right: 0,               // Aligns the element to the right (optional)
+        flex: 1,
+        backgroundColor: 'transparent',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: 20,
+    },
+    closeButton: {
+        alignSelf: 'flex-end',
+        padding: 10,
+    },
+    captureContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: 30,
+    },
+    captureButton: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        backgroundColor: 'white',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    captureInner: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: 'white',
+        borderWidth: 2,
+        borderColor: 'black',
+    },
+    previewContainer: {
+        flex: 1,
+        backgroundColor: 'black',
+    },
+    previewImage: {
+        flex: 1,
+        resizeMode: 'contain',
+    },
+    previewButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        padding: 20,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+    },
+    button: {
+        padding: 15,
+        borderRadius: 8,
+        backgroundColor: '#666',
+        minWidth: 120,
+        alignItems: 'center',
+    },
+    useButton: {
+        backgroundColor: '#27ae60',
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    }
 });
 
 export default SimpleUploadOrCapture;

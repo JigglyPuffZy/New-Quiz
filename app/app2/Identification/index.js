@@ -87,13 +87,23 @@ const TypingGame = () => {
         setProgress(answeredQuestions / questions.length);
     }, [userAnswers]);
 
+    const normalizeAnswer = (answer) => {
+        return answer
+            .toLowerCase()   // Convert to lowercase
+            .replace(/\s+/g, '')   // Remove all spaces
+        // .replace(/s$/, '');     // OPTIONAL: if you want it to ignore singular / plural answers
+    };
+
     const handleSubmit = async () => {
 
         try {
             let correctCount = 0;
             userAnswers.forEach((answer, index) => {
-                const userAnswer = (answer || "").trim().toLowerCase();
-                const correctAnswer = (questions[index]?.correctAnswer || questions[index]?.answer || "").trim().toLowerCase();
+                // Normalize user and correct answers
+                const userAnswer = normalizeAnswer(answer || "");
+                const correctAnswer = normalizeAnswer(questions[index]?.correctAnswer || questions[index]?.answer || "");
+
+                // Compare the normalized answers
                 if (userAnswer === correctAnswer) {
                     correctCount += 1;
                 }
@@ -167,8 +177,8 @@ const TypingGame = () => {
     };
 
     const renderQuestion = ({item, index}) => {
-        const userAnswer = userAnswers[index]?.toLowerCase().trim();
-        const correctAnswer = item.answer?.toLowerCase().trim();
+        const userAnswer = normalizeAnswer(userAnswers[index] || "");
+        const correctAnswer = normalizeAnswer(item.answer || "");
         const isCorrect = userAnswer === correctAnswer;
         const hasAnswer = userAnswer !== undefined && userAnswer !== "";
 

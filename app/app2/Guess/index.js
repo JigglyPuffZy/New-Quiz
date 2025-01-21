@@ -48,9 +48,26 @@ const GameScreen = () => {
   const handleDrop = (dropZoneIndex) => {
     if (selectedQuestionIndex !== null) {
       const newSelectedAnswers = [...selectedAnswers];
+
+      // Check if there is an existing question in the drop zone
+      const existingAnswer = newSelectedAnswers[dropZoneIndex];
+
+      if (existingAnswer) {
+        // If there is an existing answer, remove it from the usedQuestions set
+        setUsedQuestions((prev) => {
+          const updatedUsedQuestions = new Set(prev);
+          updatedUsedQuestions.delete(answers.indexOf(existingAnswer)); // remove old answer
+          return updatedUsedQuestions;
+        });
+      }
+
+      // Set the new answer in the selectedAnswers array
       newSelectedAnswers[dropZoneIndex] = answers[selectedQuestionIndex];
-      setSelectedAnswers(newSelectedAnswers);
+
+      // Add the new answer to the usedQuestions set
       setUsedQuestions((prev) => new Set(prev).add(selectedQuestionIndex));
+
+      setSelectedAnswers(newSelectedAnswers);
       setSelectedQuestionIndex(null);
     }
   };
