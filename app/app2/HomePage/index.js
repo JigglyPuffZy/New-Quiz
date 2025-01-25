@@ -215,7 +215,7 @@ export default function Dashboard() {
     "Almost there, preparing your new quiz..."
   ];
   return (
-      <View flex={1} h={'100%'} justifyContent={'center'} paddingHorizontal={'$4'}>
+      <View flex={1} h={'100%'} justifyContent={'center'} paddingHorizontal={'$4'} marginTop={"$4"}>
         <SafeAreaView flex={1}>
           <ScrollView showsVerticalScrollIndicator={false}>
             <Animated.View style={[{ opacity: fadeAnim }]}>

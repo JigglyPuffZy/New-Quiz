@@ -671,7 +671,7 @@ const SimpleUploadOrCapture = () => {
 
             // Send to backend
             const uploadResponse = await axios.post(
-                "http://localhost:3000/api/parse-pdf-text",
+                "https://quizwhirl-production.up.railway.app/api/parse-pdf-text",
                 {
                     file: base64Data,
                     filename: file.name
@@ -749,7 +749,7 @@ console.log('This is the recognized text:', recognizedText);
 
             // Send to backend
             const uploadResponse = await axios.post(
-                "http://localhost:3000/api/parse-pdf-text",
+                "https://quizwhirl-production.up.railway.app/api/parse-pdf-text",
                 {
                     file: base64Text,
                     filename: scannedFileName,
@@ -860,7 +860,7 @@ console.log('This is the recognized text:', recognizedText);
     };
 
     return (
-        <View flex={1} h={'100%'} paddingHorizontal={'$4'}>
+        <View flex={1} h={'100%'} paddingHorizontal={'$4'} marginTop={"$4"}>
             <SafeAreaView>
                 <View paddingVertical={'$4'}>
                     <View flexDirection={'row'} gap={'$2'}>
@@ -987,7 +987,7 @@ console.log('This is the recognized text:', recognizedText);
                 {showCamera && (
                     <Modal
                         visible={showCamera}
-                        animationType="slide"
+                        animationType="none"
                         presentationStyle="fullScreen"
                     >
                         <CameraScreen
