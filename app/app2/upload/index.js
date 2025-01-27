@@ -887,9 +887,9 @@ console.log('This is the recognized text:', recognizedText);
 
                             <View flexDirection={'row'} justifyContent={'center'} gap={'$2'}>
 
-                                <Button size="$5" mt={'$4'} width={'50%'} backgroundColor={'#27ae60'}
+                                <Button size="$5" mt={'$4'} width={'50%'} backgroundColor={'#27ae60'} color={"#fff"}
                                         onPress={handleSubmit} disabled={!fileName && !fileUri}>Submit</Button>
-                                <Button size="$5" mt={'$4'} backgroundColor={'#db1818'} width={'50%'}
+                                <Button size="$5" mt={'$4'} backgroundColor={'#db1818'} color={"#fff"} width={'50%'}
                                         onPress={handleReset}>Reset</Button>
                             </View>
                             <Button color={'#000'} backgroundColor={'#dedcdc'} size="$5" mt={'$2'}
@@ -905,16 +905,16 @@ console.log('This is the recognized text:', recognizedText);
                             >
                                 Scan Image
                             </Button>
-                            <Button
-                                color={'#000'}
-                                backgroundColor={'#dedcdc'}
-                                size="$5"
-                                mt={'$2'}
-                                icon={<Ionicons name="bug" size={24} color="#000"/>}
-                                onPress={testOCR}
-                            >
-                                Test OCR (Dev)
-                            </Button>
+                            {/*<Button*/}
+                            {/*    color={'#000'}*/}
+                            {/*    backgroundColor={'#dedcdc'}*/}
+                            {/*    size="$5"*/}
+                            {/*    mt={'$2'}*/}
+                            {/*    icon={<Ionicons name="bug" size={24} color="#000"/>}*/}
+                            {/*    onPress={testOCR}*/}
+                            {/*>*/}
+                            {/*    Test OCR (Dev)*/}
+                            {/*</Button>*/}
                         </>
                     ) : (
                         <>
@@ -972,7 +972,7 @@ console.log('This is the recognized text:', recognizedText);
                                         fontSize: 16,
                                         fontWeight: 'bold',
                                         marginBottom: 20,
-                                        color: '#fff',
+                                        color: '#000',
                                         textAlign: 'center',
                                         opacity: fadeAnim,
                                         paddingHorizontal: 20

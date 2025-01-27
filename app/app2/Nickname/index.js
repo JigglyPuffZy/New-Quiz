@@ -38,10 +38,12 @@ const Widget = () => {
     const { nickname, setNickname, loadNickname, isEditing } = useNicknameStore();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
+    const [inputNickname, setInputNickname] = useState('');
 
     const handleNicknameChange = (text) => {
-        setNickname(text);
+        setInputNickname(text);  // Now updates local state only
     };
+
 
     // Load saved nickname when component mounts
     useEffect(() => {
@@ -58,19 +60,19 @@ const Widget = () => {
         if (!isLoading && nickname && !isEditing) {
             router.replace('app2/upload');
         }
-    }, [isLoading, nickname, isEditing]);
+    }, [isLoading]);
 
 
 
     const handleSaveClick = async () => {
-        if (!nickname.trim()) {
+        if (!inputNickname.trim()) {
             Alert.alert('Error', 'Please enter a nickname.');
             return;
         }
 
         try {
-            await setNickname(nickname.trim());
-            console.log(`Saving nickname: ${nickname}`);
+            await setNickname(inputNickname.trim());
+            console.log(`Saving nickname: ${inputNickname}`);
             router.push('app2/upload');
         } catch (error) {
             Alert.alert('Error', 'Failed to save nickname. Please try again.');
@@ -89,7 +91,7 @@ const Widget = () => {
                     <Text mt={"$2"} fontSize={20} fontWeight={900} color={'black'}>
                         What should we call you?
                     </Text>
-                    <Input color={'black'} mt={"$4"} value={nickname} onChangeText={handleNicknameChange} size={'$6'}
+                    <Input color={'black'} mt={"$4"} value={inputNickname} onChangeText={handleNicknameChange} size={'$6'}
                            placeholder={'e.g. Aaron James'} width={'100%'} backgroundColor={'#F5f5d1'}
                            borderColor={'#fee135'} borderWidth={'$1'} focusStyle={{
                         borderColor: '#fee135'
