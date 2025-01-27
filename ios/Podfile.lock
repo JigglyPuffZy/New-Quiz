@@ -301,12 +301,12 @@ PODS:
   - hermes-engine (0.74.5):
     - hermes-engine/Pre-built (= 0.74.5)
   - hermes-engine/Pre-built (0.74.5)
-  - lottie-ios (4.4.1)
-  - lottie-react-native (6.7.2):
+  - lottie-ios (4.4.3)
+  - lottie-react-native (6.7.0):
     - DoubleConversion
     - glog
     - hermes-engine
-    - lottie-ios (= 4.4.1)
+    - lottie-ios (~> 4.4.1)
     - RCT-Folly (= 2024.01.01.00)
     - RCTRequired
     - RCTTypeSafety
@@ -1252,14 +1252,6 @@ PODS:
   - React-Mapbuffer (0.74.5):
     - glog
     - React-debug
-  - react-native-camera (4.2.1):
-    - React-Core
-    - react-native-camera/RCT (= 4.2.1)
-    - react-native-camera/RN (= 4.2.1)
-  - react-native-camera/RCT (4.2.1):
-    - React-Core
-  - react-native-camera/RN (4.2.1):
-    - React-Core
   - react-native-document-picker (9.3.1):
     - DoubleConversion
     - glog
@@ -1537,27 +1529,6 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNReanimated (3.10.1):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.01.01.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Codegen
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
   - RNScreens (3.31.1):
     - DoubleConversion
     - glog
@@ -1650,7 +1621,6 @@ DEPENDENCIES:
   - React-jsitracing (from `../node_modules/react-native/ReactCommon/hermes/executor/`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
-  - react-native-camera (from `../node_modules/react-native-camera`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-pdf (from `../node_modules/react-native-pdf`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -1679,7 +1649,6 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
-  - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -1806,8 +1775,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   React-Mapbuffer:
     :path: "../node_modules/react-native/ReactCommon"
-  react-native-camera:
-    :path: "../node_modules/react-native-camera"
   react-native-document-picker:
     :path: "../node_modules/react-native-document-picker"
   react-native-pdf:
@@ -1864,8 +1831,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
-  RNReanimated:
-    :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNSVG:
@@ -1906,8 +1871,8 @@ SPEC CHECKSUMS:
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: fdfdfe5479092de0c4bdbebedd9056951f092c4f
   hermes-engine: 8c1577f3fdb849cbe7729c2e7b5abc4b845e88f8
-  lottie-ios: e047b1d2e6239b787cc5e9755b988869cf190494
-  lottie-react-native: 4279da8b681e89c29a2adb9f99985d6cf372d49d
+  lottie-ios: fcb5e73e17ba4c983140b7d21095c834b3087418
+  lottie-react-native: f851c0e235f171d99083c803f728f644be1dcf65
   RCT-Folly: 02617c592a293bd6d418e0a88ff4ee1f88329b47
   RCTDeprecation: 3afceddffa65aee666dafd6f0116f1d975db1584
   RCTRequired: ec1239bc9d8bf63e10fb92bd8b26171a9258e0c1
@@ -1932,7 +1897,6 @@ SPEC CHECKSUMS:
   React-jsitracing: 3b6060bbf5317663667e1dd93560c7943ab86ccc
   React-logger: 257858bd55f3a4e1bc0cf07ddc8fb9faba6f8c7c
   React-Mapbuffer: 6c1cacdbf40b531f549eba249e531a7d0bfd8e7f
-  react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
   react-native-document-picker: c4f197741c327270453aa9840932098e0064fd52
   react-native-pdf: 70ec85fc764070ce9324f5aea504795e889e6ba0
   react-native-safe-area-context: a240ad4b683349e48b1d51fed1611138d1bdad97
@@ -1961,7 +1925,6 @@ SPEC CHECKSUMS:
   ReactCommon: f7da14a8827b72704169a48c929bcde802698361
   RNCAsyncStorage: 826b603ae9c0f88b5ac4e956801f755109fa4d5c
   RNGestureHandler: 2282cfbcf86c360d29f44ace393203afd5c6cff7
-  RNReanimated: 35f9ac9c3ac42d0497ebd1cce5c39d7687a8493e
   RNScreens: b32a9ff15bea7fcdbe5dff6477bc503f792b1208
   RNSVG: 43b64ed39c14ce830d840903774154ca0c1f27ec
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
