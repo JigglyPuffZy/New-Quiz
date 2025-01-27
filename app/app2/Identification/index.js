@@ -18,6 +18,7 @@ import {Button, View} from "tamagui";
 import {AntDesign} from "@expo/vector-icons";
 import LottieView from "lottie-react-native";
 import {  Text, YStack, XStack, Card } from "tamagui";
+import QuizResultsPDF from "../../../components/QuizResultsPDF";
 
 const {width, height} = Dimensions.get("window");
 
@@ -412,6 +413,7 @@ const TypingGame = () => {
                                 </Card>
 
                                 <YStack space="$3" width="100%" marginTop="$2">
+                                    <QuizResultsPDF />
                                     <Button
                                         size="$5"
                                         backgroundColor="$green9"
@@ -423,7 +425,7 @@ const TypingGame = () => {
                                     <Button
                                         size="$5"
                                         backgroundColor="$gray12"
-                                        color="black"
+                                        color="#fff"
                                         onPress={handleQuit}
                                     >
                                         Return Home
