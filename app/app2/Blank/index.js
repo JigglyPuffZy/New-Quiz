@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -10,9 +9,16 @@ import {
   Modal,
   Platform,
   StatusBar,
-} from 'react-native';
-import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+} from "react-native";
+import {
+  PanGestureHandler,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import { AntDesign } from "@expo/vector-icons";
 import {
   useFonts,
@@ -32,26 +38,29 @@ const DraggableLetter = ({ letter, onGestureEvent, onGestureEnd }) => {
   const animatedY = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: animatedX.value }, { translateY: animatedY.value }],
+    transform: [
+      { translateX: animatedX.value },
+      { translateY: animatedY.value },
+    ],
   }));
 
   return (
-      <PanGestureHandler
-          onGestureEvent={(event) => {
-            animatedX.value = event.nativeEvent.translationX;
-            animatedY.value = event.nativeEvent.translationY;
-            onGestureEvent(event.nativeEvent, letter.id);
-          }}
-          onEnded={(event) => {
-            onGestureEnd(event.nativeEvent, letter.id);
-            animatedX.value = withSpring(0);
-            animatedY.value = withSpring(0);
-          }}
-      >
-        <Animated.View style={[styles.letter, animatedStyle]}>
-          <Text style={styles.letterText}>{letter.char}</Text>
-        </Animated.View>
-      </PanGestureHandler>
+    <PanGestureHandler
+      onGestureEvent={(event) => {
+        animatedX.value = event.nativeEvent.translationX;
+        animatedY.value = event.nativeEvent.translationY;
+        onGestureEvent(event.nativeEvent, letter.id);
+      }}
+      onEnded={(event) => {
+        onGestureEnd(event.nativeEvent, letter.id);
+        animatedX.value = withSpring(0);
+        animatedY.value = withSpring(0);
+      }}
+    >
+      <Animated.View style={[styles.letter, animatedStyle]}>
+        <Text style={styles.letterText}>{letter.char}</Text>
+      </Animated.View>
+    </PanGestureHandler>
   );
 };
 
@@ -74,7 +83,7 @@ const DynamicDragDropPuzzle = () => {
   // Initialize the refs in useEffect
   useEffect(() => {
     if (questions?.length > 0) {
-      questions.forEach(question => {
+      questions.forEach((question) => {
         answerBoxRefs.current[question.question] = [];
       });
       resetPuzzle();
@@ -91,11 +100,13 @@ const DynamicDragDropPuzzle = () => {
     const lettersObj = {};
     const answersObj = {};
     questions.forEach((question) => {
-      const newLetters = question.answer.split('').map((char, i) => ({
+      const newLetters = question.answer.split("").map((char, i) => ({
         id: `${question.question}-${i}`,
         char,
       }));
-      lettersObj[question.question] = [...newLetters].sort(() => Math.random() - 0.5);
+      lettersObj[question.question] = [...newLetters].sort(
+        () => Math.random() - 0.5
+      );
       answersObj[question.question] = Array(question.answer.length).fill(null);
     });
     setLetters(lettersObj);
@@ -104,7 +115,7 @@ const DynamicDragDropPuzzle = () => {
 
   const resetQuestion = (questionText) => {
     const question = questions.find((q) => q.question === questionText);
-    const newLetters = question.answer.split('').map((char, i) => ({
+    const newLetters = question.answer.split("").map((char, i) => ({
       id: `${questionText}-${i}`,
       char,
     }));
@@ -124,8 +135,12 @@ const DynamicDragDropPuzzle = () => {
 
   // Update the handleGestureEnd function
   const handleGestureEnd = async (event, id, questionText) => {
-    const targetBoxIndex = answers[questionText].findIndex((box) => box === null);
-    const droppedLetter = letters[questionText].find((letter) => letter.id === id);
+    const targetBoxIndex = answers[questionText].findIndex(
+      (box) => box === null
+    );
+    const droppedLetter = letters[questionText].find(
+      (letter) => letter.id === id
+    );
 
     if (targetBoxIndex !== -1 && droppedLetter) {
       // Get the target box reference
@@ -134,7 +149,7 @@ const DynamicDragDropPuzzle = () => {
       if (!boxRef) return;
 
       // Measure the box position
-      const measurePromise = new Promise(resolve => {
+      const measurePromise = new Promise((resolve) => {
         boxRef.measure((x, y, width, height, pageX, pageY) => {
           resolve({ pageX, pageY, width, height });
         });
@@ -143,15 +158,19 @@ const DynamicDragDropPuzzle = () => {
       const boxMeasurements = await measurePromise;
 
       // Calculate if the letter was dropped within the box bounds
-      const isWithinX = event.absoluteX >= boxMeasurements.pageX &&
-          event.absoluteX <= boxMeasurements.pageX + boxMeasurements.width;
-      const isWithinY = event.absoluteY >= boxMeasurements.pageY &&
-          event.absoluteY <= boxMeasurements.pageY + boxMeasurements.height;
+      const isWithinX =
+        event.absoluteX >= boxMeasurements.pageX &&
+        event.absoluteX <= boxMeasurements.pageX + boxMeasurements.width;
+      const isWithinY =
+        event.absoluteY >= boxMeasurements.pageY &&
+        event.absoluteY <= boxMeasurements.pageY + boxMeasurements.height;
 
       if (isWithinX && isWithinY) {
         setLetters((prevLetters) => ({
           ...prevLetters,
-          [questionText]: prevLetters[questionText].filter((letter) => letter.id !== id),
+          [questionText]: prevLetters[questionText].filter(
+            (letter) => letter.id !== id
+          ),
         }));
         setAnswers((prevAnswers) => {
           const newAnswer = [...prevAnswers[questionText]];
@@ -164,29 +183,30 @@ const DynamicDragDropPuzzle = () => {
 
   // Update the answer box rendering to include refs
   const renderAnswerBoxes = (question) => (
-      <View style={styles.answerBoxes}>
-        {answers[question.question]?.map((char, idx) => (
-            <View
-                key={idx}
-                ref={ref => {
-                  if (!answerBoxRefs.current[question.question]) {
-                    answerBoxRefs.current[question.question] = [];
-                  }
-                  answerBoxRefs.current[question.question][idx] = ref;
-                }}
-                style={styles.answerBox}
-            >
-              <Text style={styles.boxText}>{char || ''}</Text>
-            </View>
-        ))}
-      </View>
+    <View style={styles.answerBoxes}>
+      {answers[question.question]?.map((char, idx) => (
+        <View
+          key={idx}
+          ref={(ref) => {
+            if (!answerBoxRefs.current[question.question]) {
+              answerBoxRefs.current[question.question] = [];
+            }
+            answerBoxRefs.current[question.question][idx] = ref;
+          }}
+          style={styles.answerBox}
+        >
+          <Text style={styles.boxText}>{char || ""}</Text>
+        </View>
+      ))}
+    </View>
   );
-
 
   const handleShuffle = (questionText) => {
     setLetters((prevLetters) => ({
       ...prevLetters,
-      [questionText]: [...prevLetters[questionText]].sort(() => Math.random() - 0.5),
+      [questionText]: [...prevLetters[questionText]].sort(
+        () => Math.random() - 0.5
+      ),
     }));
   };
 
@@ -198,7 +218,9 @@ const DynamicDragDropPuzzle = () => {
       setIsResultsVisible(true);
 
       const calculatedScore = questions.reduce((acc, question) => {
-        const userAnswer = (answers[question.question] || []).join('').toLowerCase();
+        const userAnswer = (answers[question.question] || [])
+          .join("")
+          .toLowerCase();
         const correctAnswer = question.answer.toLowerCase();
         return acc + (userAnswer === correctAnswer ? 1 : 0);
       }, 0);
@@ -211,7 +233,7 @@ const DynamicDragDropPuzzle = () => {
 
       await completeLevel(2);
     } catch (error) {
-      console.error('Error in handleDone:', error);
+      console.error("Error in handleDone:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -222,65 +244,87 @@ const DynamicDragDropPuzzle = () => {
   };
 
   const renderQuestion = (question, index) => (
-      <View key={index} style={styles.questionContainer}>
-        <LinearGradient
-            colors={["#a8d38d", "#fee135", "#a8d38d"]}
-            style={styles.questionGradient}
-        >
-          <Text style={styles.questionNumber}>Question {index + 1}</Text>
-          <Text style={styles.questionText}>{question.question}</Text>
-        </LinearGradient>
+    <View key={index} style={styles.questionContainer}>
+      <LinearGradient
+        colors={["#a8d38d", "#fee135", "#a8d38d"]}
+        style={styles.questionGradient}
+      >
+        <Text style={styles.questionNumber}>Question {index + 1}</Text>
+        <Text style={styles.questionText}>{question.question}</Text>
+      </LinearGradient>
 
-        <View style={styles.letterBank}>
-          {letters[question.question]?.map((letter) => (
-              <DraggableLetter
-                  key={letter.id}
-                  letter={letter}
-                  onGestureEvent={(e) => handleGestureEvent(e, letter.id, question.question)}
-                  onGestureEnd={(e) => handleGestureEnd(e, letter.id, question.question)}
-              />
-          ))}
-        </View>
-
-        {renderAnswerBoxes(question)}
-
-        {isResultsVisible && (
-            <View style={styles.feedbackContainer}>
-              {answers[question.question] ? (
-                  answers[question.question].join('').toLowerCase() === question.answer.toLowerCase() ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <AntDesign name="checkcircle" size={20} color="#2e7d32" />
-                        <Text style={[styles.feedbackText, styles.correctFeedbackText]}> Correct!</Text>
-                      </View>
-                  ) : (
-                      <View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <AntDesign name="closecircle" size={20} color="#d32f2f" />
-                          <Text style={[styles.feedbackText, styles.incorrectFeedbackText]}> Incorrect!</Text>
-                        </View>
-                        <Text style={[styles.feedbackText, styles.correctAnswerText]}>
-                          Correct answer: {question.answer}
-                        </Text>
-                      </View>
-                  )
-              ) : (
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <AntDesign name="closecircle" size={20} color="#d32f2f" />
-                    <Text style={[styles.feedbackText, styles.incorrectFeedbackText]}> Not answered</Text>
-                  </View>
-              )}
-            </View>
-        )}
-
-        <View style={styles.controls}>
-          <TouchableOpacity style={styles.icon} onPress={() => handleShuffle(question.question)}>
-            <AntDesign name="retweet" size={24} color="#74b72e" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.icon} onPress={() => resetQuestion(question.question)}>
-            <AntDesign name="reload1" size={24} color="#FF0000" />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.letterBank}>
+        {letters[question.question]?.map((letter) => (
+          <DraggableLetter
+            key={letter.id}
+            letter={letter}
+            onGestureEvent={(e) =>
+              handleGestureEvent(e, letter.id, question.question)
+            }
+            onGestureEnd={(e) =>
+              handleGestureEnd(e, letter.id, question.question)
+            }
+          />
+        ))}
       </View>
+
+      {renderAnswerBoxes(question)}
+
+      {isResultsVisible && (
+        <View style={styles.feedbackContainer}>
+          {answers[question.question] ? (
+            answers[question.question].join("").toLowerCase() ===
+            question.answer.toLowerCase() ? (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <AntDesign name="checkcircle" size={20} color="#2e7d32" />
+                <Text style={[styles.feedbackText, styles.correctFeedbackText]}>
+                  {" "}
+                  Correct!
+                </Text>
+              </View>
+            ) : (
+              <View>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <AntDesign name="closecircle" size={20} color="#d32f2f" />
+                  <Text
+                    style={[styles.feedbackText, styles.incorrectFeedbackText]}
+                  >
+                    {" "}
+                    Incorrect!
+                  </Text>
+                </View>
+                <Text style={[styles.feedbackText, styles.correctAnswerText]}>
+                  Correct answer: {question.answer}
+                </Text>
+              </View>
+            )
+          ) : (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <AntDesign name="closecircle" size={20} color="#d32f2f" />
+              <Text style={[styles.feedbackText, styles.incorrectFeedbackText]}>
+                {" "}
+                Not answered
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      <View style={styles.controls}>
+        <TouchableOpacity
+          style={styles.icon}
+          onPress={() => handleShuffle(question.question)}
+        >
+          <AntDesign name="retweet" size={24} color="#74b72e" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.icon}
+          onPress={() => resetQuestion(question.question)}
+        >
+          <AntDesign name="reload1" size={24} color="#FF0000" />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
   let [fontsLoaded] = useFonts({
@@ -291,63 +335,71 @@ const DynamicDragDropPuzzle = () => {
   if (!fontsLoaded) return null;
 
   return (
-      <GestureHandlerRootView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.headerContainer}>
-              <Text style={styles.headerText}>Drag and Drop</Text>
-              <Button
-                  color={'#000'}
-                  backgroundColor={'#dedcdc'}
-                  size="$3"
-                  mt={'$2'}
-                  onPress={handleQuit}
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContainer}
+        >
+          <View style={styles.headerContainer}>
+            <Text style={styles.headerText}>Drag and Drop</Text>
+            <Button
+              color={"#000"}
+              backgroundColor={"#dedcdc"}
+              size="$3"
+              mt={"$2"}
+              onPress={handleQuit}
+            >
+              Back to home
+            </Button>
+          </View>
+
+          <Text style={styles.instructions}>
+            Drag the letters into the boxes to form the correct word
+          </Text>
+
+          {questions?.map((question, index) => renderQuestion(question, index))}
+
+          {!isResultsVisible && (
+            <Button
+              color={"#fff"}
+              backgroundColor={"#93dc5c"}
+              size="$5"
+              mt={"$2"}
+              onPress={handleDone}
+            >
+              Done
+            </Button>
+          )}
+        </ScrollView>
+
+        <Modal
+          animationType="none"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalText}>
+                Score: {score}/{questions?.length}
+              </Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  setModalVisible(false);
+                  handleQuit();
+                }}
               >
-                Back to home
-              </Button>
+                <Text style={styles.modalButtonText}>Back to Home</Text>
+              </TouchableOpacity>
             </View>
-
-            <Text style={styles.instructions}>
-              Drag the letters into the boxes to form the correct word
-            </Text>
-
-            {questions?.map((question, index) => renderQuestion(question, index))}
-
-            {!isResultsVisible && (
-                <Button
-                    color={'#fff'}
-                    backgroundColor={'#93dc5c'}
-                    size="$5"
-                    mt={'$2'}
-                    onPress={handleDone}
-                >
-                  Done
-                </Button>
-            )}
-          </ScrollView>
-
-          <Modal
-              animationType="none"
-              transparent={true}
-              visible={modalVisible}
-              onRequestClose={() => setModalVisible(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalView}>
-                <Text style={styles.modalText}>
-                  Score: {score}/{questions?.length}
-                </Text>
-                <TouchableOpacity style={styles.modalButton} onPress={handleQuit}>
-                  <Text style={styles.modalButtonText}>Back to Home</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-        </SafeAreaView>
-      </GestureHandlerRootView>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -356,7 +408,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   scrollContainer: {
     padding: 20,
@@ -588,7 +640,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Poppins_600SemiBold",
     fontSize: 16,
-  }
+  },
 });
 
 export default DynamicDragDropPuzzle;

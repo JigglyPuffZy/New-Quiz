@@ -39,12 +39,12 @@ export const useQuizStore = create((set, get) => ({
         level1: 0,
         level2: 0,
         level3: 0,
-        level4: 0
+        level4: 0,
     },
-    unlockedLevels: [1], // Initially only level 1 is unlocked
+    unlockedLevels: [1, 2, 3, 4], // All levels are unlocked by default
     completedLevels: [], // Track completed levels
-    setUnlockedLevels: (levels) => set({unlockedLevels: levels}),
-    setCompletedLevels: (levels) => set({completedLevels: levels}),
+    setUnlockedLevels: (levels) => set({ unlockedLevels: levels }),
+    setCompletedLevels: (levels) => set({ completedLevels: levels }),
 
     setFileData: async (base64Data, fileName) => {
         try {
@@ -178,32 +178,17 @@ export const useQuizStore = create((set, get) => ({
     },
 
     // Complete a level and unlock the next one
-    completeLevel: async (level) => {
+    completeLevel: async () => {
         try {
-            const state = get();
-            if (state.completedLevels.includes(level)) {
-                return; // Level already completed
-            }
-            const newCompletedLevels = [...new Set([...state.completedLevels, level])];
-            const nextLevel = level + 1;
-            let newUnlockedLevels = [...state.unlockedLevels];
-
-            // Unlock next level if it exists (max level is 4)
-            if (nextLevel <= 4 && !newUnlockedLevels.includes(nextLevel)) {
-                newUnlockedLevels.push(nextLevel);
-            }
-
+            const allLevels = [1, 2, 3, 4]; // Assuming levels 1-4
             // Save to AsyncStorage
-            await AsyncStorage.setItem('completed_levels', JSON.stringify(newCompletedLevels));
-            await AsyncStorage.setItem('unlocked_levels', JSON.stringify(newUnlockedLevels));
-
-            // Update state
+            await AsyncStorage.setItem('unlocked_levels', JSON.stringify(allLevels));
+            // Update state directly
             set({
-                completedLevels: newCompletedLevels,
-                unlockedLevels: newUnlockedLevels,
+                unlockedLevels: allLevels
             });
         } catch (error) {
-            console.warn('Failed to complete level:', error);
+            console.warn('Failed to unlock levels:', error);
             throw error;
         }
     },
